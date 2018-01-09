@@ -11,11 +11,12 @@
         attribute vec3 location;
         uniform mat3 scaleMatrix;
         uniform mat3 transformMatrix;
+        uniform mat3 rotationMatrix;
         uniform mat3 viewMatrix;
 
         void main()
         {
-           vec3 locationInView = viewMatrix * transformMatrix * scaleMatrix * location;
+           vec3 locationInView = viewMatrix * transformMatrix * rotationMatrix * scaleMatrix * location;
            gl_Position = vec4(locationInView, 1);
         }
     </script>
@@ -57,21 +58,12 @@
             throw "Shader program error: " + gl.getProgramInfoLog(shaderProgram);
         }
         gl.useProgram(shaderProgram);
-        const uniformTimePosition = gl.getUniformLocation(shaderProgram, "time");
-        const uniformColorPosition = gl.getUniformLocation(shaderProgram, "color");
         const uniformViewMatrixPosition = gl.getUniformLocation(shaderProgram, "viewMatrix");
         const uniformScaleMatrixPosition = gl.getUniformLocation(shaderProgram, "scaleMatrix");
         const uniformTransformMatrixPosition = gl.getUniformLocation(shaderProgram, "transformMatrix");
+        const uniformRotationMatrixPosition = gl.getUniformLocation(shaderProgram, "rotationMatrix");
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.enableVertexAttribArray(0);
-
-        const viewMatrix = [
-            1, 0, 0,
-            0, canvas.width / canvas.height, 0,
-            0, 0, 1
-        ]
-
-        gl.uniformMatrix3fv(uniformViewMatrixPosition, false, viewMatrix);
 
         const vertices = [
             -1,  1, 1,
@@ -85,6 +77,14 @@
         const verticesBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+        const viewMatrix = [
+            1, 0, 0,
+            0, canvas.width / canvas.height, 0,
+            0, 0, 1
+        ]
+
+        gl.uniformMatrix3fv(uniformViewMatrixPosition, false, viewMatrix);
 
         const scaleMatrix = [
             .1, 0, 0,
@@ -102,16 +102,32 @@
 
         gl.uniformMatrix3fv(uniformTransformMatrixPosition, false, transformMatrix);
 
-        const startTime = new Date().getTime();
-        const fps = 1000 / 25;
+        gl.uniformMatrix3fv(uniformRotationMatrixPosition, false, rotationMatrix(0));
 
+        function rotationMatrix(angle) {
+            const cosAngle = Math.cos(angle);
+            const sinAngle = Math.sin(angle);
+            return [
+                      cosAngle, sinAngle, 0,
+                     -sinAngle, cosAngle, 0,
+                      0,        0,        1
+                    ]
+        }
+
+        const startTime = new Date().getTime();
+        const fps = 1000 / 30;
+        var deltaTime = 0
         function draw() {
             requestAnimationFrame(draw);
 
             const elapsedTime = new Date().getTime() - startTime;
-            if (elapsedTime > fps) {
+            if (elapsedTime - deltaTime > fps) {
+                deltaTime = elapsedTime;
                 transformMatrix[6] = (elapsedTime / 1000) % 2 - 1;
                 gl.uniformMatrix3fv(uniformTransformMatrixPosition, false, transformMatrix);
+
+                gl.uniformMatrix3fv(uniformRotationMatrixPosition, false, rotationMatrix(-elapsedTime / 100));
+
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
                 gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
