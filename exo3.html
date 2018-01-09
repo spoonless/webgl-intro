@@ -85,12 +85,13 @@
 
         const startTime = new Date().getTime();
         const fps = 1000 / 25;
-
+        var deltaTime = 0
         function draw() {
             requestAnimationFrame(draw);
 
             const elapsedTime = new Date().getTime() - startTime;
-            if (elapsedTime > fps) {
+            if (elapsedTime - deltaTime > fps) {
+                deltaTime = elapsedTime;
                 gl.uniform1f(uniformTimePosition, elapsedTime / 1000.0);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
