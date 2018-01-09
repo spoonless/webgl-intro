@@ -12,12 +12,12 @@
     <canvas id="glCanvas" width="800" height="600"></canvas>
 
     <script id="vertexShader" type="x-shader/x-vertex">
-        attribute vec3 location;
+        attribute vec2 location;
         varying vec2 position;
 
         void main()
         {
-           gl_Position = vec4(location,1);
+           gl_Position = vec4(location, 0, 1);
            position = location.xy;
         }
     </script>
@@ -76,12 +76,12 @@
         changeColor("#FF0000");
 
         const vertices = [
-            -1,  1, 0,
-            -1, -1, 0,
-             1,  1, 0,
-            -1, -1, 0,
-             1, -1, 0,
-             1,  1, 0,
+            -1,  1,
+            -1, -1,
+             1,  1,
+            -1, -1,
+             1, -1,
+             1,  1,
         ];
 
         const verticesBuffer = gl.createBuffer();
@@ -99,8 +99,8 @@
                 gl.uniform1f(uniformTimePosition, elapsedTime / 1000.0);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-                gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-                gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
+                gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+                gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
             }
         }
 

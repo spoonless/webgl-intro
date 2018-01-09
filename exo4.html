@@ -5,38 +5,29 @@
 <title>WegGL : exo 4</title>
 </head>
 <body>
-    <div>
-        <label>Choisissez la couleur : </label>
-        <input id="colorPicker" type="color" value="#FF0000" onchange="changeColor(this.value)" />
-    </div>
     <canvas id="glCanvas" width="800" height="600"></canvas>
 
     <script id="vertexShader" type="x-shader/x-vertex">
         attribute vec3 location;
-        varying vec2 position;
-        varying vec2 center;
+        uniform mat3 scaleMatrix;
+        uniform mat3 transformMatrix;
         uniform mat3 viewMatrix;
 
         void main()
         {
-           vec3 locationInView = viewMatrix * location;
+           vec3 locationInView = viewMatrix * transformMatrix * scaleMatrix * location;
            gl_Position = vec4(locationInView, 1);
-           position = location.xy;
-           center = (locationInView * vec3(.0, .0, .0)).xy;
         }
     </script>
 
     <script id ="fragmentShader" type="x-shader/x-fragment">
         precision mediump float;
-        varying vec2 position;
-        varying vec2 center;
 
         const vec3 color = vec3(.8,.3,.6);
 
         void main()
         {
-            float radius = distance(center, position);
-            gl_FragColor = vec4(color, radius < 1.0);
+            gl_FragColor = vec4(color, 1.0);
         }
     </script>
 
@@ -69,10 +60,10 @@
         const uniformTimePosition = gl.getUniformLocation(shaderProgram, "time");
         const uniformColorPosition = gl.getUniformLocation(shaderProgram, "color");
         const uniformViewMatrixPosition = gl.getUniformLocation(shaderProgram, "viewMatrix");
+        const uniformScaleMatrixPosition = gl.getUniformLocation(shaderProgram, "scaleMatrix");
+        const uniformTransformMatrixPosition = gl.getUniformLocation(shaderProgram, "transformMatrix");
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.enableVertexAttribArray(0);
-
-        changeColor("#FF0000");
 
         const viewMatrix = [
             1, 0, 0,
@@ -80,20 +71,36 @@
             0, 0, 1
         ]
 
-        gl.uniformMatrix3fv(uniformViewMatrixPosition, false, new Float32Array(viewMatrix));
+        gl.uniformMatrix3fv(uniformViewMatrixPosition, false, viewMatrix);
 
         const vertices = [
-            -1,  1, 0,
-            -1, -1, 0,
-             1,  1, 0,
-            -1, -1, 0,
-             1, -1, 0,
-             1,  1, 0,
+            -1,  1, 1,
+            -1, -1, 1,
+             1,  1, 1,
+            -1, -1, 1,
+             1, -1, 1,
+             1,  1, 1,
         ];
 
         const verticesBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+        const scaleMatrix = [
+            .1, 0, 0,
+            0, .1, 0,
+            0, 0,  1
+        ]
+
+        gl.uniformMatrix3fv(uniformScaleMatrixPosition, false, scaleMatrix);
+        
+        const transformMatrix = [
+            1, 0, 0,
+            0, 1, 0,
+            0, 0, 1
+        ]
+
+        gl.uniformMatrix3fv(uniformTransformMatrixPosition, false, transformMatrix);
 
         const startTime = new Date().getTime();
         const fps = 1000 / 25;
@@ -103,23 +110,12 @@
 
             const elapsedTime = new Date().getTime() - startTime;
             if (elapsedTime > fps) {
-                gl.uniform1f(uniformTimePosition, elapsedTime / 1000.0);
-
-                gl.clear(gl.COLOR_BUFFER_BIT);
-
-                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+                transformMatrix[6] = (elapsedTime / 1000) % 2 - 1;
+                gl.uniformMatrix3fv(uniformTransformMatrixPosition, false, transformMatrix);
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
                 gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
             }
-        }
-
-        function changeColor(value) {
-            const red = parseInt(value.substr(1,2),16);
-            const green = parseInt(value.substr(3,2),16);
-            const blue = parseInt(value.substr(5,2),16);
-
-            gl.uniform3fv(uniformColorPosition, [red / 255, green / 255, blue / 255]);
         }
 
         window.addEventListener("load", draw);
