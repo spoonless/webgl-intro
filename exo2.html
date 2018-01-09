@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>WegGL : exo 2</title>
+</head>
+<body>
+    <canvas id="glCanvas" width="800" height="600"></canvas>
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+        attribute vec3 location;
+        varying vec2 position;
+
+        void main()
+        {
+           gl_Position = vec4(location,1);
+           position = location.xy;
+        }
+    </script>
+
+    <script id ="fragmentShader" type="x-shader/x-fragment">
+        precision mediump float;
+        varying vec2 position;
+
+        const vec2 center = vec2(0.0, 0.0);
+        const vec3 color = vec3(.8, .6, .1);
+
+        void main()
+        {
+            float factor = 1.0 - pow(distance(center, position), 5.0);
+
+            gl_FragColor = vec4(color * factor, 1.0);
+        }
+    </script>
+
+    <script type="text/javascript">
+        const canvas = document.getElementById("glCanvas");
+        const gl = canvas.getContext("webgl");
+
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertexShader, document.getElementById("vertexShader").text);
+        gl.compileShader(vertexShader);
+        if (! gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+            throw "Vertex shader error: " + gl.getShaderInfoLog(vertexShader);
+        }
+
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragmentShader, document.getElementById("fragmentShader").text);
+        gl.compileShader(fragmentShader);
+        if (! gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+            throw "Fragment shader error: " + gl.getShaderInfoLog(fragmentShader);
+        }
+
+        const shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+        if (! gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            throw "Shader program error: " + gl.getProgramInfoLog(shaderProgram);
+        }
+        gl.useProgram(shaderProgram);
+        gl.bindAttribLocation(shaderProgram, 0, 'location');
+        gl.enableVertexAttribArray(0);
+
+        const vertices = [
+            -1,  1, 0,
+            -1, -1, 0,
+             1,  1, 0,
+            -1, -1, 0,
+             1, -1, 0,
+             1,  1, 0,
+        ];
+
+        const verticesBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+        function draw() {
+            gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+            gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+            gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
+        }
+
+        window.addEventListener("load", draw);
+    </script>
+
+</body>
+</html>

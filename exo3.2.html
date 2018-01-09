@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>WegGL : exo 3 (démo 2)</title>
+</head>
+<body>
+    <canvas id="glCanvas" width="800" height="600"></canvas>
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+        attribute vec3 location;
+        varying vec2 position;
+
+        void main()
+        {
+           gl_Position = vec4(location,1);
+           position = location.xy;
+        }
+    </script>
+
+    <script id ="fragmentShader" type="x-shader/x-fragment">
+        precision mediump float;
+        varying vec2 position;
+        uniform float time;
+
+        const float color_intensity = 0.45;
+        const float Pi = 3.14159;
+
+        void main()
+        {
+            vec2 p=(2. * position);
+            for(int i = 1; i < 9; i++)
+            {
+	            vec2 newp=p;
+                float ii = float(i);
+                newp.x += 0.55/ii*sin(ii*Pi*p.y+time*.01 + 0.1+cos((time/(10.*ii))*ii));
+                newp.y += 0.55/ii*cos(ii*Pi*p.x+time*.01 + 0.1+sin((time/(10.*ii))*ii));
+                p=newp;
+            }
+            vec3 col=vec3(cos(p.x+p.y+3.)*.5+.5,sin(p.x+p.y+6.)*.5+.5,(sin(p.x+p.y+9.)+cos(p.x+p.y+12.))*.25+.5);
+            gl_FragColor=vec4(col*col, 1.0);
+        }
+    </script>
+
+    <script type="text/javascript">
+        const canvas = document.getElementById("glCanvas");
+        const gl = canvas.getContext("webgl");
+
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vertexShader, document.getElementById("vertexShader").text);
+        gl.compileShader(vertexShader);
+        if (! gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+            throw "Vertex shader error: " + gl.getShaderInfoLog(vertexShader);
+        }
+
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fragmentShader, document.getElementById("fragmentShader").text);
+        gl.compileShader(fragmentShader);
+        if (! gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+            throw "Fragment shader error: " + gl.getShaderInfoLog(fragmentShader);
+        }
+
+        const shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+        gl.linkProgram(shaderProgram);
+        if (! gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            throw "Shader program error: " + gl.getProgramInfoLog(shaderProgram);
+        }
+        gl.useProgram(shaderProgram);
+        const uniformTimePosition = gl.getUniformLocation(shaderProgram, "time");
+        const uniformColorPosition = gl.getUniformLocation(shaderProgram, "color");
+        gl.bindAttribLocation(shaderProgram, 0, 'location');
+        gl.enableVertexAttribArray(0);
+
+        const vertices = [
+            -1,  1, 0,
+            -1, -1, 0,
+             1,  1, 0,
+            -1, -1, 0,
+             1, -1, 0,
+             1,  1, 0,
+        ];
+
+        const verticesBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+        const startTime = new Date().getTime();
+        const fps = 1000 / 25;
+
+        function draw() {
+            requestAnimationFrame(draw);
+
+            const elapsedTime = new Date().getTime() - startTime;
+            if (elapsedTime > fps) {
+                gl.uniform1f(uniformTimePosition, elapsedTime / 1000.0);
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+                gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+                gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
+            }
+        }
+
+        window.addEventListener("load", draw);
+    </script>
+
+</body>
+</html>
