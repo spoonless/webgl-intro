@@ -8,7 +8,7 @@
     <canvas id="glCanvas" width="800" height="600"></canvas>
 
     <script id="vertexShader" type="x-shader/x-vertex">
-        attribute vec3 location;
+        attribute vec2 location;
         uniform mat3 scaleMatrix;
         uniform mat3 transformMatrix;
         uniform mat3 rotationMatrix;
@@ -16,7 +16,7 @@
 
         void main()
         {
-           vec3 locationInView = viewMatrix * transformMatrix * rotationMatrix * scaleMatrix * location;
+           vec3 locationInView = viewMatrix * transformMatrix * rotationMatrix * scaleMatrix * vec3(location, 1);
            gl_Position = vec4(locationInView, 1);
         }
     </script>
@@ -66,12 +66,12 @@
         gl.enableVertexAttribArray(0);
 
         const vertices = [
-            -1,  1, 1,
-            -1, -1, 1,
-             1,  1, 1,
-            -1, -1, 1,
-             1, -1, 1,
-             1,  1, 1,
+            -1,  1,
+            -1, -1,
+             1,  1,
+            -1, -1,
+             1, -1,
+             1,  1,
         ];
 
         const verticesBuffer = gl.createBuffer();
@@ -79,17 +79,17 @@
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
         const viewMatrix = [
-            1, 0, 0,
-            0, canvas.width / canvas.height, 0,
-            0, 0, 1
+             2,  0, 0,
+             0, -2 * canvas.width / canvas.height, 0,
+            -1,  1, 1
         ]
 
         gl.uniformMatrix3fv(uniformViewMatrixPosition, false, viewMatrix);
 
         const scaleMatrix = [
-            .1, 0, 0,
-            0, .1, 0,
-            0, 0,  1
+            .1,  0,  0,
+             0, .1,  0,
+             0,  0,  1
         ]
 
         gl.uniformMatrix3fv(uniformScaleMatrixPosition, false, scaleMatrix);
@@ -123,14 +123,15 @@
             const elapsedTime = new Date().getTime() - startTime;
             if (elapsedTime - deltaTime > fps) {
                 deltaTime = elapsedTime;
-                transformMatrix[6] = (elapsedTime / 1000) % 2 - 1;
+                transformMatrix[6] = (elapsedTime / 1000) % 2.5 - 1.25;
+                transformMatrix[7] = .4;
                 gl.uniformMatrix3fv(uniformTransformMatrixPosition, false, transformMatrix);
 
-                gl.uniformMatrix3fv(uniformRotationMatrixPosition, false, rotationMatrix(-elapsedTime / 100));
+                gl.uniformMatrix3fv(uniformRotationMatrixPosition, false, rotationMatrix(elapsedTime / 100));
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-                gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-                gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
+                gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+                gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
             }
         }
 
