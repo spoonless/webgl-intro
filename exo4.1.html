@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>WegGL : exo 4</title>
+</head>
+<body>
+    <script type="text/javascript">
+        var transformation = {
+            "x": 0.5,
+            "y": 0.4,
+            "rotation": 0,
+            "scale": .1
+        }
+    </script>
+    
+    <canvas id="glCanvas" width="800" height="600"></canvas>
+    <div>
+        X <input type="range" min="0", max="1" value=".5" step=".01" oninput="transformation.x = parseFloat(this.value); draw()">
+        Y <input type="range" min="0", max=".8" value=".4" step=".01" oninput="transformation.y = parseFloat(this.value); draw()">
+        Rotation <input type="range" min="0", max="360" value="0" oninput="transformation.rotation = parseFloat(this.value) * Math.PI / 180; draw()">
+        Scale <input type="range" min="0.01", max="1" value=".1" step=".01" oninput="transformation.scale = parseFloat(this.value); draw()">
+    </div>
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+        attribute vec2 location;
+        uniform mat3 mvpMatrix;
+
+        void main()
+        {
+           vec3 locationInView = mvpMatrix * vec3(location, 1);
+           gl_Position = vec4(locationInView, 1);
+        }
+    </script>
+
+    <script id ="fragmentShader" type="x-shader/x-fragment">
+        precision mediump float;
+
+        const vec3 color = vec3(.8,.3,.6);
+
+        void main()
+        {
+            gl_FragColor = vec4(color, 1.0);
+        }
+    </script>
+
+    <script type="text/javascript" src="lib/gl-matrix-min.js"></script>
+    <script type="text/javascript">
+    
+        function createShaderFromElement(element) {
+            const type = element.type == "x-shader/x-vertex" ? gl.VERTEX_SHADER : gl.FRAGMENT_SHADER;
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, element.text);
+            gl.compileShader(shader);
+            if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                throw "Error in" + (type == gl.VERTEX_SHADER ? "vertex" : "fragment") + " shader: " + gl.getShaderInfoLog(shader);
+            }
+            return shader;
+        }
+        
+        function createShaderProgram(vertexShaderElement, fragmentShaderElement) {
+            const vertexShader = createShaderFromElement(vertexShaderElement);
+            const fragmentShader = createShaderFromElement(fragmentShaderElement);
+            
+            const shaderProgram = gl.createProgram();
+            gl.attachShader(shaderProgram, vertexShader);
+            gl.attachShader(shaderProgram, fragmentShader);
+            gl.linkProgram(shaderProgram);
+            if (! gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+                throw "Shader program error: " + gl.getProgramInfoLog(shaderProgram);
+            }
+            return shaderProgram;
+        }
+        
+        function createSquare() {
+            const vertices = [
+                -1,  1,
+                -1, -1,
+                 1,  1,
+                -1, -1,
+                 1, -1,
+                 1,  1,
+            ];
+            const verticesBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+            return {
+                "draw": function() {
+                    gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+                    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+                    gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
+                }
+            };
+        }
+        
+        const canvas = document.getElementById("glCanvas");
+        const gl = canvas.getContext("webgl");
+        const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
+        gl.useProgram(shaderProgram);
+        const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
+        gl.bindAttribLocation(shaderProgram, 0, 'location');
+        gl.enableVertexAttribArray(0);
+        
+        const square = createSquare();
+        
+        const projectionMatrix = mat3.create();
+        mat3.projection(projectionMatrix, 1, canvas.height / canvas.width);
+        
+        function draw() {            
+            const mvpMatrix = mat3.create();
+            mat3.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
+            mat3.translate(mvpMatrix, mvpMatrix, [transformation.x, transformation.y]);
+            mat3.rotate(mvpMatrix, mvpMatrix, transformation.rotation);
+            mat3.scale(mvpMatrix, mvpMatrix, [transformation.scale, transformation.scale]);
+
+            gl.uniformMatrix3fv(uniformMvpMatrixPosition, false, mvpMatrix);
+
+            square.draw();
+        }
+        
+        window.addEventListener("load", draw);
+    </script>
+
+</body>
+</html>
