@@ -2,22 +2,37 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>WegGL : exo 5</title>
+<title>WegGL : exo 6</title>
 </head>
 <body>
     <canvas id="glCanvas" width="800" height="600"></canvas>
 
     <script id="vertexShader" type="x-shader/x-vertex">
         attribute vec3 location;
-        attribute vec3 color;
+        attribute vec3 normal;
+        
         varying vec3 fragColor;
 
+        uniform mat3 normalMatrix;
+        uniform mat4 mvMatrix;
         uniform mat4 mvpMatrix;
+        
+        const vec3 wsLightPosition = vec3(-3.0, 3.0, .0);
+        const vec3 lightDiffuse = vec3(.9, .9, .9);
+        const vec3 materialDiffuse = vec3(.8, .0, .0);
 
         void main()
         {
+           vec3 wsPosition = (mvMatrix * vec4(location, 1.0)).xyz;
+           vec3 wsNormal = normalize(normalMatrix * normal);
+           vec3 wsLightVector = normalize(wsLightPosition - wsPosition);
+           
+           float lambertian = dot(wsNormal, wsLightVector);
+           
+           vec3 diffuse = lightDiffuse * materialDiffuse * clamp(lambertian, .0, 1.0);
+
            gl_Position = mvpMatrix * vec4(location, 1.0);
-           fragColor = color;
+           fragColor = diffuse;
         }
     </script>
 
@@ -61,101 +76,90 @@
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
         gl.enable(gl.CULL_FACE);
-
+        
         const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
         gl.useProgram(shaderProgram);
         const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
+        const uniformMvMatrixPosition = gl.getUniformLocation(shaderProgram, "mvMatrix");
+        const uniformNormalMatrixPosition = gl.getUniformLocation(shaderProgram, "normalMatrix");
         gl.bindAttribLocation(shaderProgram, 0, 'location');
-        gl.bindAttribLocation(shaderProgram, 1, 'color');
+        gl.bindAttribLocation(shaderProgram, 1, 'normal');
         gl.enableVertexAttribArray(0);
         gl.enableVertexAttribArray(1);
 
-        const vertices = [
+        const locations = [
              1.0, -1.0, -1.0,
-             1.0,  0.0,  0.0,
             -1.0,  1.0, -1.0, 
-             1.0,  0.0,  0.0,
              1.0,  1.0, -1.0, 
-             1.0,  0.0,  0.0,
 
              1.0, -1.0, -1.0, 
-             1.0,  0.0,  0.0,
             -1.0, -1.0, -1.0, 
-             1.0,  0.0,  0.0,
             -1.0,  1.0, -1.0, 
-             1.0,  0.0,  0.0,
 
             -1.0,  1.0,  1.0, 
-             1.0,  1.0,  0.0,
              1.0, -1.0,  1.0, 
-             1.0,  1.0,  0.0,
              1.0,  1.0,  1.0, 
-             1.0,  1.0,  0.0,
 
             -1.0,  1.0,  1.0, 
-             1.0,  1.0,  0.0,
             -1.0, -1.0,  1.0, 
-             1.0,  1.0,  0.0,
              1.0, -1.0,  1.0, 
-             1.0,  1.0,  0.0,
 
              1.0,  1.0,  1.0, 
-             0.0,  1.0,  0.0,
              1.0, -1.0, -1.0, 
-             0.0,  1.0,  0.0,
              1.0,  1.0, -1.0, 
-             0.0,  1.0,  0.0,
 
              1.0,  1.0,  1.0, 
-             0.0,  1.0,  0.0,
              1.0, -1.0,  1.0, 
-             0.0,  1.0,  0.0,
              1.0, -1.0, -1.0, 
-             0.0,  1.0,  0.0,
 
              1.0, -1.0,  1.0, 
-             0.0,  1.0,  1.0,
             -1.0, -1.0, -1.0, 
-             0.0,  1.0,  1.0,
              1.0, -1.0, -1.0, 
-             0.0,  1.0,  1.0,
 
              1.0, -1.0,  1.0, 
-             0.0,  1.0,  1.0,
             -1.0, -1.0,  1.0, 
-             0.0,  1.0,  1.0,
             -1.0, -1.0, -1.0, 
-             0.0,  1.0,  1.0,
 
             -1.0, -1.0, -1.0, 
-             0.0,  0.0,  1.0,
             -1.0,  1.0,  1.0, 
-             0.0,  0.0,  1.0,
             -1.0,  1.0, -1.0, 
-             0.0,  0.0,  1.0,
 
             -1.0, -1.0, -1.0, 
-             0.0,  0.0,  1.0,
             -1.0, -1.0,  1.0, 
-             0.0,  0.0,  1.0,
             -1.0,  1.0,  1.0, 
-             0.0,  0.0,  1.0,
 
              1.0,  1.0, -1.0, 
-             1.0,  0.0,  1.0,
             -1.0,  1.0,  1.0, 
-             1.0,  0.0,  1.0,
              1.0,  1.0,  1.0, 
-             1.0,  0.0,  1.0,
 
              1.0,  1.0, -1.0, 
-             1.0,  0.0,  1.0,
             -1.0,  1.0, -1.0, 
-             1.0,  0.0,  1.0,
             -1.0,  1.0,  1.0,
-             1.0,  0.0,  1.0,
         ]
         
+        function computeTriangleNormal(x1, y1, z1, x2, y2, z2, x3, y3, z3) {
+            const vec1 = vec3.fromValues(x2 - x1, y2 - y1, z2 - z1);
+            const vec2 = vec3.fromValues(x3 - x1, y3 - y1, z3 - z1);
+            const normal = vec3.create();
+            vec3.cross(normal, vec1, vec2);
+            vec3.normalize(normal, normal);
+            return normal;
+        }
+        
+        const vertices = []
+        
+        for(var i = 0; i < locations.length; i+= 9) {
+            const normal = computeTriangleNormal(locations[i], locations[i+1], locations[i+2], 
+                                                 locations[i+3], locations[i+4], locations[i+5], 
+                                                 locations[i+6], locations[i+7], locations[i+8]);
+            vertices.push(locations[i], locations[i+1], locations[i+2]);
+            vertices.push(normal[0], normal[1], normal[2]);
+            vertices.push(locations[i+3], locations[i+4], locations[i+5]);
+            vertices.push(normal[0], normal[1], normal[2]);
+            vertices.push(locations[i+6], locations[i+7], locations[i+8]);
+            vertices.push(normal[0], normal[1], normal[2]);
+        }
+
         const verticesBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
@@ -173,12 +177,22 @@
             if (elapsedTime - deltaTime > fps) {
                 deltaTime = elapsedTime;
                 
+                const mvMatrix = mat4.create();
+                mat4.translate(mvMatrix, mvMatrix, [0, 0, -5]);
+                mat4.rotate(mvMatrix, mvMatrix, deltaTime / 1000, [.9, -.7, 0]);
+
                 const mvpMatrix = mat4.create();
                 mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
-                mat4.translate(mvpMatrix, mvpMatrix, [0, 0, -5]);
-                mat4.rotate(mvpMatrix, mvpMatrix, deltaTime / 1000, [.9, -.7, 0]);
+                mat4.multiply(mvpMatrix, mvpMatrix, mvMatrix);
+                
+                const normalMatrix = mat3.create();
+                mat3.fromMat4(normalMatrix, mvMatrix);
+                mat3.invert(normalMatrix, normalMatrix);
+                mat3.transpose(normalMatrix, normalMatrix);
 
+                gl.uniformMatrix4fv(uniformMvMatrixPosition, false, mvMatrix);
                 gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
+                gl.uniformMatrix3fv(uniformNormalMatrixPosition, false, normalMatrix);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
                 gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
