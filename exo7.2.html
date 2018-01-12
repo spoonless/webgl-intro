@@ -153,6 +153,7 @@
         const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
         gl.useProgram(shaderProgram);
         const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
+        const uniformSamplerPosition = gl.getUniformLocation(shaderProgram, "sampler");
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.bindAttribLocation(shaderProgram, 1, 'uv');
 
@@ -228,6 +229,11 @@
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
                 gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
                 gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                gl.uniform1i(uniformSamplerPosition, 0);
+                
                 gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 5);
             }
         }

@@ -7,34 +7,72 @@
 <body>
     <canvas id="glCanvas" style="background: #00B7FF;" width="800" height="600"></canvas>
     
-    <img id="diffuseTexture" style="display:none;" src="images/texture.jpg">
+    <img id="diffuseTexture" style="display:none;" src="images/Brick_Wall_003_diffuse.jpg">
+
+    <img id="normalTexture" style="display:none;" src="images/Brick_Wall_003_normal.jpg">
 
     <script id="vertexShader" type="x-shader/x-vertex">
         attribute vec3 location;
         attribute vec2 uv;
-
-        varying vec3 fragColor;
-        varying vec2 fragUvCoord;
+        attribute vec3 normal;
         
-        uniform mat4 mvpMatrix;
+        varying vec3 fragPosition;
+        varying vec3 fragNormal;
+        varying vec2 fragUvCoord;
 
+        uniform mat3 normalMatrix;
+        uniform mat4 mvMatrix;
+        uniform mat4 mvpMatrix;
+        
         void main()
         {
-           gl_Position = mvpMatrix * vec4(location, 1.0);
-           fragUvCoord = uv;
+            fragNormal = normalize(normalMatrix * normal);
+            fragPosition = (mvMatrix * vec4(location, 1.0)).xyz;
+            fragUvCoord = uv;
+            gl_Position = mvpMatrix * vec4(location, 1.0);
         }
     </script>
 
     <script id ="fragmentShader" type="x-shader/x-fragment">
         precision mediump float;
-        varying vec3 fragColor;
+
+        varying vec3 fragPosition;
+        varying vec3 fragNormal;
         varying vec2 fragUvCoord;
+
+        uniform sampler2D diffuseSampler;
+        uniform sampler2D normalSampler;
         
-        uniform sampler2D sampler;
+        const vec3 wsLightPosition = vec3(-2.0, 1.5, .0);
+        const vec3 lightDiffuse = vec3(.85);
+        const vec3 lightAmbiant = vec3(.2);
+        const vec3 lightSpecular = vec3(.8);
+        const vec3 materialAmbiant = vec3(.3, .0, .0);
+        const vec3 materialSpecular = vec3(.2);
+        const float materialSpecularShininess = .8;
 
         void main()
         {
-            gl_FragColor = texture2D(sampler, fragUvCoord);
+           vec3 wsPosition = fragPosition;
+           vec3 wsLightVector = normalize(wsLightPosition - wsPosition);
+           vec3 wsViewVector = normalize(-wsPosition);
+           
+           vec3 wsNormal = texture2D(normalSampler, fragUvCoord).xyz;
+           wsNormal = normalize(((2.0 * wsNormal) - 1.0) + fragNormal);
+           
+           float lambertian = dot(wsNormal, wsLightVector);
+           
+           vec3 ambiant = lightAmbiant * materialAmbiant;
+           vec3 diffuse = lightDiffuse * texture2D(diffuseSampler, fragUvCoord).rgb * clamp(lambertian, .0, 1.0);
+           vec3 specular = vec3(.0, .0, .0);
+           if (lambertian > .0)
+           {
+                vec3 reflection = reflect(-wsLightVector, wsNormal);
+                float specularIntensity = pow(clamp(dot(wsViewVector, reflection), .0, 1.0), materialSpecularShininess);
+                specular = lightSpecular * materialSpecular * specularIntensity;
+           }
+
+           gl_FragColor = vec4(ambiant + diffuse + specular, 1.0);
         }
     </script>
 
@@ -86,40 +124,55 @@
         const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
         gl.useProgram(shaderProgram);
         const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
-        const uniformSamplerPosition = gl.getUniformLocation(shaderProgram, "sampler");
+        const uniformMvMatrixPosition = gl.getUniformLocation(shaderProgram, "mvMatrix");
+        const uniformNormalMatrixPosition = gl.getUniformLocation(shaderProgram, "normalMatrix");
+        const uniformDiffuseSamplerPosition = gl.getUniformLocation(shaderProgram, "diffuseSampler");
+        const uniformNormalSamplerPosition = gl.getUniformLocation(shaderProgram, "normalSampler");
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.bindAttribLocation(shaderProgram, 1, 'uv');
+        gl.bindAttribLocation(shaderProgram, 2, 'normal');
         gl.enableVertexAttribArray(0);
         gl.enableVertexAttribArray(1);
+        gl.enableVertexAttribArray(2);
 
         const vertices = [
             -1.0, -1.0, 0.0,
             0.0, 0.0,
+            0.0,0.0, 1.0,
             1.0, 1.0, 0.0,
             1.0, 1.0,
+            0.0,0.0, 1.0,
             -1.0, 1.0, 0.0,
             0.0, 1.0,
+            0.0,0.0, 1.0,
             
             1.0, 1.0, 0.0,
             1.0, 1.0,
+            0.0,0.0, 1.0,
             -1.0, -1.0, 0.0,
             0.0, 0.0,
+            0.0,0.0, 1.0,
             1.0, -1.0, 0.0,
-            1.0, 0.0
+            1.0, 0.0,
+            0.0,0.0, 1.0,
         ]
-        
+               
         const verticesBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+        const diffuseTexture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, diffuseTexture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("diffuseTexture"));
         gl.generateMipmap(gl.TEXTURE_2D);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-  
+
+        const normalTexture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, normalTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("normalTexture"));
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+          
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, 45 * Math.PI / 180, canvas.width / canvas.height, 0, 100);
 
@@ -133,23 +186,38 @@
             if (elapsedTime - deltaTime > fps) {
                 deltaTime = elapsedTime;
                 
+                const mvMatrix = mat4.create();
+                mat4.translate(mvMatrix, mvMatrix, [0, 0, -3]);
+                mat4.rotate(mvMatrix, mvMatrix, Math.PI * (mouse.x -.5), [.0, 1.0, .0]);
+                mat4.rotate(mvMatrix, mvMatrix, Math.PI * (mouse.y -.5), [1.0, .0, .0]);
+
                 const mvpMatrix = mat4.create();
                 mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
-                mat4.translate(mvpMatrix, mvpMatrix, [0, 0, -4]);
-                mat4.rotate(mvpMatrix, mvpMatrix, Math.PI * (mouse.x -.5), [.0, 1.0, .0]);
-                mat4.rotate(mvpMatrix, mvpMatrix, Math.PI * (mouse.y -.5), [1.0, .0, .0]);
+                mat4.multiply(mvpMatrix, mvpMatrix, mvMatrix);
+                
+                const normalMatrix = mat3.create();
+                mat3.fromMat4(normalMatrix, mvMatrix);
+                mat3.invert(normalMatrix, normalMatrix);
+                mat3.transpose(normalMatrix, normalMatrix);
 
+                gl.uniformMatrix4fv(uniformMvMatrixPosition, false, mvMatrix);
                 gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
+                gl.uniformMatrix3fv(uniformNormalMatrixPosition, false, normalMatrix);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-                gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
-                gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
-
+                gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
+                gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 32, 12);
+                gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 32, 20);
+                
                 gl.activeTexture(gl.TEXTURE0);
-                gl.bindTexture(gl.TEXTURE_2D, texture);
-                gl.uniform1i(uniformSamplerPosition, 0);
+                gl.bindTexture(gl.TEXTURE_2D, diffuseTexture);
+                gl.uniform1i(uniformDiffuseSamplerPosition, 0);
 
-                gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 5);
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, normalTexture);
+                gl.uniform1i(uniformNormalSamplerPosition, 1);
+
+                gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 8);
             }
         }
 
