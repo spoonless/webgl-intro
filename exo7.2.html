@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>WegGL : exo 7</title>
+<style>
+
+#glCanvas {
+    background-image: url('images/background.jpg');
+    position: fixed;
+    top:0;
+    left:0;
+}
+
+#text {
+    position:relative;
+    width: 650px;
+    height: 220px;
+    margin-top: 200px;
+    margin-left: 450px;
+    padding: 1em;
+    border-radius: 10px;
+    font-family: sans-serif;
+    font-size: 25pt;
+    color: rgb(240,240,250);
+    background: rgba(60,60,60,.5);
+}
+
+</style>
+</head>
+<body>
+    <canvas id="glCanvas" width="1280" height="786"></canvas>
+
+    <div id=text>WebGL permet de réaliser du compositing avec des éléments HTML, du style CSS et du rendu 3D/2D.</div>
+    
+    <img id="diffuseTexture" style="display:none;" src="images/html5_logo.png">
+
+    <script id="backgroundVertexShader" type="x-shader/x-vertex">
+        attribute vec2 location;
+        varying vec2 position;
+
+        void main()
+        {
+           gl_Position = vec4(location, 0, 1);
+           position = location.xy;
+        }
+    </script>
+
+    <script id ="backgroundFragmentShader" type="x-shader/x-fragment">
+        precision mediump float;
+        varying vec2 position;
+
+        uniform float time;
+
+        #define MAX_ITER 3
+        void main() {
+	        vec2 sp = position;
+	        vec2 p = sp*5.0 - vec2(20.0);
+	        vec2 i = p;
+	        float c = 0.6;
+	        float inten = .08;
+            float t=0.0;
+	        for (int n = 0; n < MAX_ITER; n++) 
+	        {
+		        t += (100.+time * 0.05) * (1.0 - (4.0 / float(n+1)));
+		        i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+		        c += 1.0/length(vec2(p.x / (sin(i.x+t)/inten),p.y / (cos(i.y+t)/inten)));
+	        }
+	        c /= float(MAX_ITER);
+	        c = 1.5-sqrt(c);
+	        c = pow(c, 4.0);
+	        gl_FragColor = vec4(vec3(c*.4), c) + vec4(0.0, 0.09, 0.16, 0.0);
+        }
+    </script>
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+        attribute vec3 location;
+        attribute vec2 uv;
+
+        varying vec3 fragColor;
+        varying vec2 fragUvCoord;
+        
+        uniform mat4 mvpMatrix;
+
+        void main()
+        {
+           gl_Position = mvpMatrix * vec4(location, 1.0);
+           fragUvCoord = uv;
+        }
+    </script>
+
+    <script id ="fragmentShader" type="x-shader/x-fragment">
+        precision mediump float;
+        varying vec3 fragColor;
+        varying vec2 fragUvCoord;
+        
+        uniform sampler2D sampler;
+
+        void main()
+        {
+            gl_FragColor = texture2D(sampler, fragUvCoord);
+        }
+    </script>
+
+    <script type="text/javascript" src="lib/gl-matrix-min.js"></script>
+    <script type="text/javascript">
+        function createShaderFromElement(element) {
+            const type = element.type == "x-shader/x-vertex" ? gl.VERTEX_SHADER : gl.FRAGMENT_SHADER;
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, element.text);
+            gl.compileShader(shader);
+            if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                throw "Error in " + (type == gl.VERTEX_SHADER ? "vertex" : "fragment") + " shader: " + gl.getShaderInfoLog(shader);
+            }
+            return shader;
+        }
+        
+        function createShaderProgram(vertexShaderElement, fragmentShaderElement) {
+            const vertexShader = createShaderFromElement(vertexShaderElement);
+            const fragmentShader = createShaderFromElement(fragmentShaderElement);
+            
+            const shaderProgram = gl.createProgram();
+            gl.attachShader(shaderProgram, vertexShader);
+            gl.attachShader(shaderProgram, fragmentShader);
+            gl.linkProgram(shaderProgram);
+            if (! gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+                throw "Shader program error: " + gl.getProgramInfoLog(shaderProgram);
+            }
+            return shaderProgram;
+        }
+        
+        const canvas = document.getElementById("glCanvas");
+        const gl = canvas.getContext("webgl");
+
+        const backgroundShaderProgram = createShaderProgram(document.getElementById("backgroundVertexShader"), document.getElementById("backgroundFragmentShader"));
+        gl.useProgram(backgroundShaderProgram);
+        const uniformTimePosition = gl.getUniformLocation(backgroundShaderProgram, "time");
+        gl.bindAttribLocation(backgroundShaderProgram, 0, 'location');
+
+        const backgroundVertices = [
+            -1,  1,
+            -1, -1,
+             1,  1,
+            -1, -1,
+             1, -1,
+             1,  1,
+        ];
+
+        const backgroundVerticesBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, backgroundVerticesBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(backgroundVertices), gl.STATIC_DRAW);
+
+        const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
+        gl.useProgram(shaderProgram);
+        const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
+        gl.bindAttribLocation(shaderProgram, 0, 'location');
+        gl.bindAttribLocation(shaderProgram, 1, 'uv');
+
+        const vertices = [
+            -1.0, -1.0, 0.0,
+            0.0, 0.0,
+            1.0, 1.0, 0.0,
+            1.0, 1.0,
+            -1.0, 1.0, 0.0,
+            0.0, 1.0,
+            
+            1.0, 1.0, 0.0,
+            1.0, 1.0,
+            -1.0, -1.0, 0.0,
+            0.0, 0.0,
+            1.0, -1.0, 0.0,
+            1.0, 0.0
+        ]
+        
+        const verticesBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("diffuseTexture"));
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  
+        const projectionMatrix = mat4.create();
+        const canvasRatio = canvas.width / canvas.height;
+        mat4.ortho(projectionMatrix, -canvasRatio * 2, canvasRatio * 2, -2, 2, 0.1, 10);
+
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+        const startTime = new Date().getTime();
+        const fps = 1000 / 60;
+        var deltaTime = 0;
+        function draw() {
+            requestAnimationFrame(draw);
+
+            const elapsedTime = new Date().getTime() - startTime;
+            if (elapsedTime - deltaTime > fps) {
+                deltaTime = elapsedTime;
+                
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                
+                gl.useProgram(backgroundShaderProgram);
+                gl.enableVertexAttribArray(0);
+                gl.disableVertexAttribArray(1);
+
+                gl.uniform1f(uniformTimePosition, elapsedTime / 1000.0);
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, backgroundVerticesBuffer);
+                gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+                gl.drawArrays(gl.TRIANGLES, 0, backgroundVertices.length / 2);
+
+                const mvpMatrix = mat4.create();
+                mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
+                mat4.translate(mvpMatrix, mvpMatrix, [-2.2, 0, -3]);
+                mat4.rotate(mvpMatrix, mvpMatrix, deltaTime / 300, [.0, 1.0, .0]);
+
+                gl.useProgram(shaderProgram);
+                gl.enableVertexAttribArray(0);
+                gl.enableVertexAttribArray(1);
+
+                gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+                gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
+                gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+                gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 5);
+            }
+        }
+
+        window.addEventListener("load", draw);
+    </script>
+
+</body>
+</html>
