@@ -8,6 +8,14 @@
     <canvas id="glCanvas" width="800" height="600"></canvas>
 
     <script id="vertexShader" type="x-shader/x-vertex">
+        /*
+        * Vertex shader qui doit indiquer les coordonnées d'un vertex
+        * dans l'espace de coordonnées du viewport grâce à la variable prédéfinie
+        * gl_Position (de type vec4).
+        * Le vertex shader est compilé et exécuté par le GPU.
+        */
+
+        // attribut de vertex représentant la position
         attribute vec2 location;
 
         void main()
@@ -17,6 +25,12 @@
     </script>
 
     <script id ="fragmentShader" type="x-shader/x-fragment">
+        /*
+        * Fragment shader qui doit indiquer la couleur d'un point grâce à la
+        * variable prédéfinie gl_FragColor.
+        * Le fragment shader est compilé et exécuté par le GPU.
+        */
+
         void main()
         {
             gl_FragColor = vec4(.8, .3, .1, 1.0);
@@ -24,9 +38,15 @@
     </script>
 
     <script type="text/javascript">
+        /*
+        * Récupération du contexte WebGL
+        */
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
 
+        /*
+        * Compilation du vertex shader par le GPU
+        */
         const vertexShader = gl.createShader(gl.VERTEX_SHADER);
         gl.shaderSource(vertexShader, document.getElementById("vertexShader").text);
         gl.compileShader(vertexShader);
@@ -34,6 +54,9 @@
             throw "Vertex shader error: " + gl.getShaderInfoLog(vertexShader);
         }
 
+        /*
+        * Compilation du fragment shader par le GPU
+        */
         const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
         gl.shaderSource(fragmentShader, document.getElementById("fragmentShader").text);
         gl.compileShader(fragmentShader);
@@ -41,6 +64,9 @@
             throw "Fragment shader error: " + gl.getShaderInfoLog(fragmentShader);
         }
 
+        /*
+        * Link du programme avec le vertex shader et le fragment shader par le GPU
+        */
         const shaderProgram = gl.createProgram();
         gl.attachShader(shaderProgram, vertexShader);
         gl.attachShader(shaderProgram, fragmentShader);
@@ -48,10 +74,18 @@
         if (! gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
             throw "Shader program error: " + gl.getProgramInfoLog(shaderProgram);
         }
+        
+        /*
+        * Activation du programme et liaison de l'attribut location à l'indice 0.
+        */
         gl.useProgram(shaderProgram);
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.enableVertexAttribArray(0);
 
+        /*
+        * Vertices de la surface 2D. Les coordonnées des vertices de la surface
+        * correspondent au format du viewport WebGL afin de couvrir tout le canvas.
+        */
         const vertices = [
             -1,  1,
             -1, -1,
@@ -61,11 +95,19 @@
              1,  1
         ];
 
+        /*
+        * Création du buffer de données dans le GPU et copie des coordonnées
+        * au format Float32.
+        */
         const verticesBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
         function draw() {
+            /*
+            * Activation du buffer, définition de l'attribut 0 et appel au
+            * shader courant sur le GPU.
+            */
             gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
             gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
@@ -73,6 +115,16 @@
 
         window.addEventListener("load", draw);
     </script>
+    
+    <div>
+        <p>Exemple de création d'un contexte WebGL et création de shaders.</p>
+        
+        <p>Variante : réduire la taille de la zone colorée</p>
+        <ul>
+            <li>en changeant les dimensions du viewport grâce à la méthode gl.viewport(x, y, width, height)</li>
+            <li>en changeant l'implémentation du vertex shader</li>
+        </ul>
+    </div>
 
 </body>
 </html>
