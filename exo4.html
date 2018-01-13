@@ -41,6 +41,7 @@
         // récupération contexte WebGL
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
+        gl.clearColor(0.0, 0.0, 0.0, 0.0);
 
         // compilation du vertex shader
         const vertexShader = gl.createShader(gl.VERTEX_SHADER);
@@ -149,7 +150,7 @@
         gl.uniformMatrix3fv(uniformRotationMatrixPosition, false, rotationMatrix(0));
 
         const startTime = new Date().getTime();
-        const fps = 1000 / 60;
+        const fps = 1000 / 35;
         var deltaTime = 0
         function draw() {
             requestAnimationFrame(draw);
@@ -158,6 +159,8 @@
             if (elapsedTime - deltaTime > fps) {
                 deltaTime = elapsedTime;
                 
+                gl.clear(gl.COLOR_BUFFER_BIT);        
+
                 /*
                 * Mise à jour de la matrice de translation en fonction du temps
                 */
