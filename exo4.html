@@ -10,14 +10,19 @@
     <script id="vertexShader" type="x-shader/x-vertex">
         attribute vec2 location;
         uniform mat3 scaleMatrix;
-        uniform mat3 transformMatrix;
+        uniform mat3 translationMatrix;
         uniform mat3 rotationMatrix;
-        uniform mat3 viewMatrix;
+        uniform mat3 projectionMatrix;
 
         void main()
         {
-           vec3 locationInView = viewMatrix * transformMatrix * rotationMatrix * scaleMatrix * vec3(location, 1);
-           gl_Position = vec4(locationInView, 1);
+            /*
+            * La position du vertex dans l'espace de coordonnées du viewport est
+            * le résultat d'opération de transformation et de projection. Chaque
+            * matrice représente une opération.
+            */
+            vec3 locationInView = projectionMatrix * translationMatrix * rotationMatrix * scaleMatrix * vec3(location, 1);
+            gl_Position = vec4(locationInView, 1);
         }
     </script>
 
@@ -33,9 +38,11 @@
     </script>
 
     <script type="text/javascript">
+        // récupération contexte WebGL
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
 
+        // compilation du vertex shader
         const vertexShader = gl.createShader(gl.VERTEX_SHADER);
         gl.shaderSource(vertexShader, document.getElementById("vertexShader").text);
         gl.compileShader(vertexShader);
@@ -43,6 +50,7 @@
             throw "Vertex shader error: " + gl.getShaderInfoLog(vertexShader);
         }
 
+        // compilation du fragment shader
         const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
         gl.shaderSource(fragmentShader, document.getElementById("fragmentShader").text);
         gl.compileShader(fragmentShader);
@@ -50,6 +58,7 @@
             throw "Fragment shader error: " + gl.getShaderInfoLog(fragmentShader);
         }
 
+        // link du programme shader
         const shaderProgram = gl.createProgram();
         gl.attachShader(shaderProgram, vertexShader);
         gl.attachShader(shaderProgram, fragmentShader);
@@ -58,13 +67,16 @@
             throw "Shader program error: " + gl.getProgramInfoLog(shaderProgram);
         }
         gl.useProgram(shaderProgram);
-        const uniformViewMatrixPosition = gl.getUniformLocation(shaderProgram, "viewMatrix");
-        const uniformScaleMatrixPosition = gl.getUniformLocation(shaderProgram, "scaleMatrix");
-        const uniformTransformMatrixPosition = gl.getUniformLocation(shaderProgram, "transformMatrix");
-        const uniformRotationMatrixPosition = gl.getUniformLocation(shaderProgram, "rotationMatrix");
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.enableVertexAttribArray(0);
 
+        // extraction de la position des variables uniformes
+        const uniformProjectionMatrixPosition = gl.getUniformLocation(shaderProgram, "projectionMatrix");
+        const uniformScaleMatrixPosition = gl.getUniformLocation(shaderProgram, "scaleMatrix");
+        const uniformTranslationMatrixPosition = gl.getUniformLocation(shaderProgram, "translationMatrix");
+        const uniformRotationMatrixPosition = gl.getUniformLocation(shaderProgram, "rotationMatrix");
+
+        // création de la géométrie
         const vertices = [
             -1,  1,
             -1, -1,
@@ -78,14 +90,25 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
-        const viewMatrix = [
+        /*
+        * Création de la matrice de projection. Pour une projection 2D, il s'agit
+        * d'une matrice 3x3. La matrice ci-dessous correspond à matrice de changement
+        * de repère afin de passer d'un repère avec (0,0) en haut à gauche au repère
+        * du viewport WebGL.
+        */
+        const projectionMatrix = [
              2,  0, 0,
              0, -2 * canvas.width / canvas.height, 0,
             -1,  1, 1
         ]
 
-        gl.uniformMatrix3fv(uniformViewMatrixPosition, false, viewMatrix);
+        gl.uniformMatrix3fv(uniformProjectionMatrixPosition, false, projectionMatrix);
 
+        /*
+        * Matrice de changement d'échelle. Pour une représentation 2D, il s'agit
+        * d'une matrice diagonale 3x3. Les coefficients d'echelle sont en position
+        * [0][0] et [1][1].
+        */
         const scaleMatrix = [
             .1,  0,  0,
              0, .1,  0,
@@ -94,16 +117,25 @@
 
         gl.uniformMatrix3fv(uniformScaleMatrixPosition, false, scaleMatrix);
         
-        const transformMatrix = [
+        /*
+        * Matrice de translation. Pour une représentation 2D, il s'agit
+        * d'une matrice diagonale 3x3. Pour l'instant la matrice ci-dessous est
+        * la matrice identité (aucun effet) mais elle sera modifiée pour animer
+        * le déplacement de la forme.
+        */
+        const translationMatrix = [
             1, 0, 0,
             0, 1, 0,
             0, 0, 1
         ]
 
-        gl.uniformMatrix3fv(uniformTransformMatrixPosition, false, transformMatrix);
+        gl.uniformMatrix3fv(uniformTranslationMatrixPosition, false, translationMatrix);
 
-        gl.uniformMatrix3fv(uniformRotationMatrixPosition, false, rotationMatrix(0));
-
+        /*
+        * Calcule la matrice de rotation. Pour une représentation 2D, il s'agit
+        * d'une matrice diagonale 3x3 qui réalise la rotation selon un angle donné
+        * sur un axe Z.
+        */
         function rotationMatrix(angle) {
             const cosAngle = Math.cos(angle);
             const sinAngle = Math.sin(angle);
@@ -114,6 +146,8 @@
                     ]
         }
 
+        gl.uniformMatrix3fv(uniformRotationMatrixPosition, false, rotationMatrix(0));
+
         const startTime = new Date().getTime();
         const fps = 1000 / 60;
         var deltaTime = 0
@@ -123,10 +157,17 @@
             const elapsedTime = new Date().getTime() - startTime;
             if (elapsedTime - deltaTime > fps) {
                 deltaTime = elapsedTime;
-                transformMatrix[6] = (elapsedTime / 1000) % 2.5 - 1.25;
-                transformMatrix[7] = .4;
-                gl.uniformMatrix3fv(uniformTransformMatrixPosition, false, transformMatrix);
+                
+                /*
+                * Mise à jour de la matrice de translation en fonction du temps
+                */
+                translationMatrix[6] = (elapsedTime / 1000) % 2. - .8;
+                translationMatrix[7] = .4;
+                gl.uniformMatrix3fv(uniformTranslationMatrixPosition, false, translationMatrix);
 
+                /*
+                * Création de la matrice de rotation en fonction du temps
+                */
                 gl.uniformMatrix3fv(uniformRotationMatrixPosition, false, rotationMatrix(elapsedTime / 100));
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
@@ -137,6 +178,12 @@
 
         window.addEventListener("load", draw);
     </script>
+
+    <div>
+        <p>Exemple d'animation 2D en utilisant des matrices de transformation et de projection.</p>
+        
+        <p>Variante : modifier l'ordre d'application des transformations pour créer de nouvelles animations.</p>
+    </div>
 
 </body>
 </html>
