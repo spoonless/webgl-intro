@@ -8,6 +8,9 @@
     <canvas id="glCanvas" width="800" height="600"></canvas>
 
     <script id="vertexShader" type="x-shader/x-vertex">
+        /*
+        * Ce shader utilise deux attributs par vertex : sa position et sa couleur.
+        */
         attribute vec3 location;
         attribute vec3 color;
         varying vec3 fragColor;
@@ -58,108 +61,95 @@
             return shaderProgram;
         }
         
+        // récupération contexte WebGL
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
+        gl.clearColor(0.0, 0.0, 0.0, 0.0);
+        
+        /*
+        * On active le culling de face : les faces internes ne sont plus rendues.
+        */
         gl.enable(gl.CULL_FACE);
 
+        // création du programme shader
         const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
         gl.useProgram(shaderProgram);
+        /*
+        * Le shader déclare deux attributs chaque vertex : une position et une couleur.
+        */
         const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
+
+        /*
+        * On positionne l'indice 0 pour l'attribut représentant la position.
+        * On positionne l'indice 1 pour l'attribut représentant la couleur.
+        */
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.bindAttribLocation(shaderProgram, 1, 'color');
         gl.enableVertexAttribArray(0);
         gl.enableVertexAttribArray(1);
 
+        /*
+        * Création de la géométrie.
+        * Le tableau des données décrit chaque vertices avec sa position et sa couleur.
+        */
         const vertices = [
-             1.0, -1.0, -1.0,
-             1.0,  0.0,  0.0,
-            -1.0,  1.0, -1.0, 
-             1.0,  0.0,  0.0,
-             1.0,  1.0, -1.0, 
-             1.0,  0.0,  0.0,
+        /*
+        *        Position           Couleur
+        */
+             1.0, -1.0, -1.0,   1.0,  0.0,  0.0,
+            -1.0,  1.0, -1.0,   1.0,  0.0,  0.0,
+             1.0,  1.0, -1.0,   1.0,  0.0,  0.0,
 
-             1.0, -1.0, -1.0, 
-             1.0,  0.0,  0.0,
-            -1.0, -1.0, -1.0, 
-             1.0,  0.0,  0.0,
-            -1.0,  1.0, -1.0, 
-             1.0,  0.0,  0.0,
+             1.0, -1.0, -1.0,   1.0,  0.0,  0.0,
+            -1.0, -1.0, -1.0,   1.0,  0.0,  0.0,
+            -1.0,  1.0, -1.0,   1.0,  0.0,  0.0,
 
-            -1.0,  1.0,  1.0, 
-             1.0,  1.0,  0.0,
-             1.0, -1.0,  1.0, 
-             1.0,  1.0,  0.0,
-             1.0,  1.0,  1.0, 
-             1.0,  1.0,  0.0,
+            -1.0,  1.0,  1.0,   1.0,  1.0,  0.0,
+             1.0, -1.0,  1.0,   1.0,  1.0,  0.0,
+             1.0,  1.0,  1.0,   1.0,  1.0,  0.0,
 
-            -1.0,  1.0,  1.0, 
-             1.0,  1.0,  0.0,
-            -1.0, -1.0,  1.0, 
-             1.0,  1.0,  0.0,
-             1.0, -1.0,  1.0, 
-             1.0,  1.0,  0.0,
+            -1.0,  1.0,  1.0,   1.0,  1.0,  0.0,
+            -1.0, -1.0,  1.0,   1.0,  1.0,  0.0,
+             1.0, -1.0,  1.0,   1.0,  1.0,  0.0,
 
-             1.0,  1.0,  1.0, 
-             0.0,  1.0,  0.0,
-             1.0, -1.0, -1.0, 
-             0.0,  1.0,  0.0,
-             1.0,  1.0, -1.0, 
-             0.0,  1.0,  0.0,
+             1.0,  1.0,  1.0,   0.0,  1.0,  0.0,
+             1.0, -1.0, -1.0,   0.0,  1.0,  0.0,
+             1.0,  1.0, -1.0,   0.0,  1.0,  0.0,
 
-             1.0,  1.0,  1.0, 
-             0.0,  1.0,  0.0,
-             1.0, -1.0,  1.0, 
-             0.0,  1.0,  0.0,
-             1.0, -1.0, -1.0, 
-             0.0,  1.0,  0.0,
+             1.0,  1.0,  1.0,   0.0,  1.0,  0.0,
+             1.0, -1.0,  1.0,   0.0,  1.0,  0.0,
+             1.0, -1.0, -1.0,   0.0,  1.0,  0.0,
 
-             1.0, -1.0,  1.0, 
-             0.0,  1.0,  1.0,
-            -1.0, -1.0, -1.0, 
-             0.0,  1.0,  1.0,
-             1.0, -1.0, -1.0, 
-             0.0,  1.0,  1.0,
+             1.0, -1.0,  1.0,   0.0,  1.0,  1.0,
+            -1.0, -1.0, -1.0,   0.0,  1.0,  1.0,
+             1.0, -1.0, -1.0,   0.0,  1.0,  1.0,
 
-             1.0, -1.0,  1.0, 
-             0.0,  1.0,  1.0,
-            -1.0, -1.0,  1.0, 
-             0.0,  1.0,  1.0,
-            -1.0, -1.0, -1.0, 
-             0.0,  1.0,  1.0,
+             1.0, -1.0,  1.0,   0.0,  1.0,  1.0,
+            -1.0, -1.0,  1.0,   0.0,  1.0,  1.0,
+            -1.0, -1.0, -1.0,   0.0,  1.0,  1.0,
 
-            -1.0, -1.0, -1.0, 
-             0.0,  0.0,  1.0,
-            -1.0,  1.0,  1.0, 
-             0.0,  0.0,  1.0,
-            -1.0,  1.0, -1.0, 
-             0.0,  0.0,  1.0,
+            -1.0, -1.0, -1.0,   0.0,  0.0,  1.0,
+            -1.0,  1.0,  1.0,   0.0,  0.0,  1.0,
+            -1.0,  1.0, -1.0,   0.0,  0.0,  1.0,
 
-            -1.0, -1.0, -1.0, 
-             0.0,  0.0,  1.0,
-            -1.0, -1.0,  1.0, 
-             0.0,  0.0,  1.0,
-            -1.0,  1.0,  1.0, 
-             0.0,  0.0,  1.0,
+            -1.0, -1.0, -1.0,   0.0,  0.0,  1.0,
+            -1.0, -1.0,  1.0,   0.0,  0.0,  1.0,
+            -1.0,  1.0,  1.0,   0.0,  0.0,  1.0,
 
-             1.0,  1.0, -1.0, 
-             1.0,  0.0,  1.0,
-            -1.0,  1.0,  1.0, 
-             1.0,  0.0,  1.0,
-             1.0,  1.0,  1.0, 
-             1.0,  0.0,  1.0,
+             1.0,  1.0, -1.0,   1.0,  0.0,  1.0,
+            -1.0,  1.0,  1.0,   1.0,  0.0,  1.0,
+             1.0,  1.0,  1.0,   1.0,  0.0,  1.0,
 
-             1.0,  1.0, -1.0, 
-             1.0,  0.0,  1.0,
-            -1.0,  1.0, -1.0, 
-             1.0,  0.0,  1.0,
-            -1.0,  1.0,  1.0,
-             1.0,  0.0,  1.0,
+             1.0,  1.0, -1.0,   1.0,  0.0,  1.0,
+            -1.0,  1.0, -1.0,   1.0,  0.0,  1.0,
+            -1.0,  1.0,  1.0,   1.0,  0.0,  1.0,
         ]
         
         const verticesBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
+        // créarion de la matrice de projection
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, 45 * Math.PI / 180, canvas.width / canvas.height, 0, 100);
 
@@ -173,6 +163,9 @@
             if (elapsedTime - deltaTime > fps) {
                 deltaTime = elapsedTime;
                 
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
+                // création de la matrice MVP
                 const mvpMatrix = mat4.create();
                 mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
                 mat4.translate(mvpMatrix, mvpMatrix, [0, 0, -5]);
@@ -181,6 +174,11 @@
                 gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+                /*
+                * Dans la description des attributs des vertices, il faut tenir
+                * compte du fait que le buffer contient à la fois des données
+                * de position et à la fois de données de couleur.
+                */
                 gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 24, 0);
                 gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 24, 12);
                 gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 6);
@@ -190,5 +188,10 @@
         window.addEventListener("load", draw);
     </script>
 
+    <div>
+        <p>Exemple d'animation 3D en utilisant les couleurs des vertices.</p>
+        <p>Variante : utiliser des couleurs différentes pour chaque vertices décrivant un triangle.</p> 
+        <p>Variante : spécifier explicitement que les faces externes ne doivent pas être rendues : gl.cullFace(gl.FRONT)</p> 
+    </div>
 </body>
 </html>
