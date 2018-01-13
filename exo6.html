@@ -54,7 +54,7 @@
             gl.shaderSource(shader, element.text);
             gl.compileShader(shader);
             if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                throw "Error in" + (type == gl.VERTEX_SHADER ? "vertex" : "fragment") + " shader: " + gl.getShaderInfoLog(shader);
+                throw "Error in " + (type == gl.VERTEX_SHADER ? "vertex" : "fragment") + " shader: " + gl.getShaderInfoLog(shader);
             }
             return shader;
         }
