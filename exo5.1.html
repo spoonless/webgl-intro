@@ -23,7 +23,7 @@
 
         void main()
         {
-            gl_FragColor = vec4(.0, .0, .0, 1.0);
+            gl_FragColor = vec4(.8, .0, .0, 1.0);
         }
     </script>
 
@@ -54,15 +54,19 @@
             return shaderProgram;
         }
         
+        // récupération contexte WebGL
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
+        gl.clearColor(0.0, 0.0, 0.0, 0.0);
 
+        // création du programme shader
         const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
         gl.useProgram(shaderProgram);
         const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.enableVertexAttribArray(0);
 
+        // création de la géométrie
         const vertices = [
              1.0, -1.0, -1.0,
             -1.0,  1.0, -1.0, 
@@ -117,6 +121,9 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
+        /*
+        * Création de la matrice de projection 3D
+        */
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, 45 * Math.PI / 180, canvas.width / canvas.height, 0, 100);
 
@@ -130,6 +137,9 @@
             if (elapsedTime - deltaTime > fps) {
                 deltaTime = elapsedTime;
                 
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
+                // matrice MVP
                 const mvpMatrix = mat4.create();
                 mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
                 mat4.translate(mvpMatrix, mvpMatrix, [0, 0, -5]);
@@ -139,6 +149,9 @@
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
                 gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+                /*
+                * On spécifie un mode de dessin en triangle (rendu des faces).
+                */
                 gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 3);
             }
         }
@@ -146,5 +159,8 @@
         window.addEventListener("load", draw);
     </script>
 
+    <div>
+        <p>Exemple d'animation 3D en utilisant des matrices de transformation et de projection perspective.</p>
+    </div>
 </body>
 </html>
