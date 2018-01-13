@@ -25,6 +25,10 @@
     <script id ="fragmentShader" type="x-shader/x-fragment">
         precision mediump float;
         varying vec2 position;
+        
+        /*
+        * Les variables uniformes permettant de positionner des valeurs.
+        */
         uniform float time;
         uniform vec3 color;
 
@@ -39,9 +43,11 @@
     </script>
 
     <script type="text/javascript">
+        // récupération contexte WebGL
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
 
+        // compilation du vertex shader
         const vertexShader = gl.createShader(gl.VERTEX_SHADER);
         gl.shaderSource(vertexShader, document.getElementById("vertexShader").text);
         gl.compileShader(vertexShader);
@@ -49,6 +55,7 @@
             throw "Vertex shader error: " + gl.getShaderInfoLog(vertexShader);
         }
 
+        // compilation du fragment shader
         const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
         gl.shaderSource(fragmentShader, document.getElementById("fragmentShader").text);
         gl.compileShader(fragmentShader);
@@ -56,6 +63,7 @@
             throw "Fragment shader error: " + gl.getShaderInfoLog(fragmentShader);
         }
 
+        // link du programme shader
         const shaderProgram = gl.createProgram();
         gl.attachShader(shaderProgram, vertexShader);
         gl.attachShader(shaderProgram, fragmentShader);
@@ -64,12 +72,20 @@
             throw "Shader program error: " + gl.getProgramInfoLog(shaderProgram);
         }
         gl.useProgram(shaderProgram);
+        gl.enableVertexAttribArray(0);
+        
+        /*
+        * On extrait la position des uniformes dans le programme (c'es-à-dire leur
+        * indice). Attention le programme doit être linké correctement et actif 
+        * (useProgram).
+        */
         const uniformTimePosition = gl.getUniformLocation(shaderProgram, "time");
         const uniformColorPosition = gl.getUniformLocation(shaderProgram, "color");
         gl.bindAttribLocation(shaderProgram, 0, 'location');
-        gl.enableVertexAttribArray(0);
+
         changeColor("#FF0000");
 
+        // création de la géométrie
         const vertices = [
             -1,  1,
             -1, -1,
@@ -83,15 +99,34 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
+        /*
+        * Pour réaliser une animation, on est mémorise le moment du lancement
+        * de l'animation (approximativement la création de la page.
+        */
         const startTime = new Date().getTime();
+        
+        /*
+        * On peut limiter les appels WebGL en calculant le nombre maximal d'image
+        * par seconde que l'on souhaite rendre. Généralement, il faut une animation
+        * de 60 images/s pour un rendu fluide. Pour cette exemple, une animation
+        * à 25/s est suffisante.
+        */
         const fps = 1000 / 25;
         var deltaTime = 0
         function draw() {
+            // méthode de rappel de la routine pour dessiner sur le canvas
             requestAnimationFrame(draw);
 
+            // on calcule le temps écoulé depuis le dernier appel à draw
+            // et on rend à nouveau l'image par rapport au nombre d'images par seconde
+            // souhaité.
             const elapsedTime = new Date().getTime() - startTime;
             if (elapsedTime - deltaTime > fps) {
                 deltaTime = elapsedTime;
+                
+                /*
+                * On met à jour la variable uniforme
+                */
                 gl.uniform1f(uniformTimePosition, elapsedTime / 1000.0);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
@@ -101,15 +136,25 @@
         }
 
         function changeColor(value) {
+            // value est une couleur au format CSS #001122
             const red = parseInt(value.substr(1,2),16);
             const green = parseInt(value.substr(3,2),16);
             const blue = parseInt(value.substr(5,2),16);
 
+            /*
+            * On met à jour la variable uniforme selon la couleur choisie.
+            */
             gl.uniform3fv(uniformColorPosition, [red / 255, green / 255, blue / 255]);
         }
 
         window.addEventListener("load", draw);
     </script>
+
+    <div>
+        <p>Exemple d'utilisation des variables uniformes dans un shader pour réaliser des animations ou des interactions avec l'utilisateur.</p>
+        
+        <p>Variante : gérer la transparence (plutôt qu'un fond noir) et animer un rétrécissement vertical de la géométrie de rendu.</p>
+    </div>
 
 </body>
 </html>
