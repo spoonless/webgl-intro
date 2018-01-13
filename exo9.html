@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>WegGL : exo 9</title>
+</head>
+<body>
+    <canvas id="glCanvas" style="background: #00B7FF;" width="1600" height="800"></canvas>
+    <div>
+        <input type="checkbox" onchange="document.getElementById('glCanvas').wireframe = this.checked"> Affichage du maillage
+    </div>
+    
+    <img id="diffuseTexture" style="display:none;" src="images/HDR_040_Field_Bg.jpg">
+
+    <script id="vertexShader" type="x-shader/x-vertex">
+        attribute vec3 location;
+        attribute vec2 uv;
+        
+        varying vec2 fragUvCoord;
+
+        uniform mat4 mvpMatrix;
+        
+        void main()
+        {
+            fragUvCoord = uv;
+            gl_Position = mvpMatrix * vec4(location, 1.0);
+        }
+    </script>
+
+    <script id ="fragmentShader" type="x-shader/x-fragment">
+        precision mediump float;
+
+        varying vec2 fragUvCoord;
+
+        uniform vec4 lineColor;
+        uniform sampler2D diffuseSampler;
+
+        void main()
+        {
+           if (lineColor.w > .0) {
+              gl_FragColor = lineColor;
+           } else {
+              gl_FragColor = texture2D(diffuseSampler, fragUvCoord);
+           }
+        }
+    </script>
+
+    <script type="text/javascript" src="lib/gl-matrix-min.js"></script>
+    <script type="text/javascript">
+        const mouse = {
+            "x": .5,
+            "y": .5,
+            "update": function(e) {
+                this.x = e.pageX / window.innerWidth;
+                this.y = e.pageY / window.innerHeight;
+            },
+            "track": function() {
+                document.addEventListener('mousemove', this.update.bind(this), false);
+                document.addEventListener('mouseenter', this.update.bind(this), false);
+            }
+        }
+        
+        mouse.track();
+
+        function createShaderFromElement(element) {
+            const type = element.type == "x-shader/x-vertex" ? gl.VERTEX_SHADER : gl.FRAGMENT_SHADER;
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, element.text);
+            gl.compileShader(shader);
+            if (! gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                throw "Error in " + (type == gl.VERTEX_SHADER ? "vertex" : "fragment") + " shader: " + gl.getShaderInfoLog(shader);
+            }
+            return shader;
+        }
+        
+        function createShaderProgram(vertexShaderElement, fragmentShaderElement) {
+            const vertexShader = createShaderFromElement(vertexShaderElement);
+            const fragmentShader = createShaderFromElement(fragmentShaderElement);
+            
+            const shaderProgram = gl.createProgram();
+            gl.attachShader(shaderProgram, vertexShader);
+            gl.attachShader(shaderProgram, fragmentShader);
+            gl.linkProgram(shaderProgram);
+            if (! gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+                throw "Shader program error: " + gl.getProgramInfoLog(shaderProgram);
+            }
+            return shaderProgram;
+        }
+        
+        const canvas = document.getElementById("glCanvas");
+        const gl = canvas.getContext("webgl");
+
+        const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
+        gl.useProgram(shaderProgram);
+        const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
+        const uniformLineColorPosition = gl.getUniformLocation(shaderProgram, "lineColor");
+        const uniformDiffuseSamplerPosition = gl.getUniformLocation(shaderProgram, "diffuseSampler");
+        gl.bindAttribLocation(shaderProgram, 0, 'location');
+        gl.bindAttribLocation(shaderProgram, 1, 'uv');
+        gl.enableVertexAttribArray(0);
+        gl.enableVertexAttribArray(1);
+
+        function UvSphere(size) {
+            function computeUvSpherePoint(lattitude, longitude) {
+                //(x, y, z) = (sin(Pi * m/M) cos(2Pi * n/N), sin(Pi * m/M) sin(2Pi * n/N), cos(Pi * m/M))
+                return [Math.sin(Math.PI * lattitude/(size)) * Math.cos(2 * Math.PI * longitude/(size * 2)),
+                        Math.cos(Math.PI * lattitude/(size)),
+                        Math.sin(Math.PI * lattitude/(size)) * Math.sin(2 * Math.PI * longitude/(size * 2))];
+            }
+            
+            function computeUvPoint(lattitude, longitude) {
+                return [longitude / (size * 2), lattitude / size];
+            }
+            
+            const push = Array.prototype.push;
+
+            const vertices = [];
+
+            for (var i = 0; i < size * 2; ++i) {
+                push.apply(vertices, computeUvSpherePoint(0, 0));
+                push.apply(vertices, computeUvPoint(0, i));
+                push.apply(vertices, computeUvSpherePoint(1, i));
+                push.apply(vertices, computeUvPoint(1, i));
+                push.apply(vertices, computeUvSpherePoint(1, i+1));
+                push.apply(vertices, computeUvPoint(1, i+1));
+            }
+            for (var j = 1; j < (size - 1); ++j) {
+                for (var i = 0; i < size * 2; ++i) {
+                    push.apply(vertices, computeUvSpherePoint(j, i));
+                    push.apply(vertices, computeUvPoint(j, i));
+                    push.apply(vertices, computeUvSpherePoint(j, i+1));
+                    push.apply(vertices, computeUvPoint(j, i+1));
+                    push.apply(vertices, computeUvSpherePoint(j+1, i));
+                    push.apply(vertices, computeUvPoint(j+1, i));
+
+                    push.apply(vertices, computeUvSpherePoint(j, i+1));
+                    push.apply(vertices, computeUvPoint(j, i+1));
+                    push.apply(vertices, computeUvSpherePoint(j+1, i+1));
+                    push.apply(vertices, computeUvPoint(j+1, i+1));
+                    push.apply(vertices, computeUvSpherePoint(j+1, i));
+                    push.apply(vertices, computeUvPoint(j+1, i));
+
+                }
+            }
+            for (var i = 0; i < size * 2 ; ++i) {
+                push.apply(vertices, computeUvSpherePoint(size - 1, i));
+                push.apply(vertices, computeUvPoint(size - 1, i));
+                push.apply(vertices, computeUvSpherePoint(size - 1, i+1));
+                push.apply(vertices, computeUvPoint(size - 1, i+1));
+                push.apply(vertices, computeUvSpherePoint(size, size - 1));
+                push.apply(vertices, computeUvPoint(size, i));
+            }
+            return vertices;
+        }
+        
+        const vertices = UvSphere(16);
+        
+        const verticesBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+        const diffuseTexture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, diffuseTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("diffuseTexture"));
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+          
+        const projectionMatrix = mat4.create();
+        mat4.perspective(projectionMatrix, 45 * Math.PI / 180, canvas.width / canvas.height, 0, 100);
+
+        const startTime = new Date().getTime();
+        const fps = 1000 / 60;
+        var deltaTime = 0;
+        function draw() {
+            requestAnimationFrame(draw);
+
+            const elapsedTime = new Date().getTime() - startTime;
+            if (elapsedTime - deltaTime > fps) {
+                deltaTime = elapsedTime;
+                
+                const mvpMatrix = mat4.create();
+                mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
+                mat4.rotate(mvpMatrix, mvpMatrix, Math.PI * (mouse.y -.5), [1.0, .0, .0]);
+                mat4.rotate(mvpMatrix, mvpMatrix, Math.PI * (mouse.x * 2 -.5), [.0, 1.0, .0]);
+                
+                gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+                gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
+                gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+
+                gl.uniform4fv(uniformLineColorPosition, [.0, .0, .0, .0]);
+                gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 5);
+                
+                if (canvas.wireframe) {
+                    gl.uniform4fv(uniformLineColorPosition, [1.0, .0, .0, 1.0]);
+                    gl.drawArrays(gl.LINE_STRIP, 0, vertices.length / 5);
+                }
+
+            }
+        }
+
+        window.addEventListener("load", draw);
+    </script>
+
+</body>
+</html>
