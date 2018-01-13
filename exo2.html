@@ -9,17 +9,27 @@
 
     <script id="vertexShader" type="x-shader/x-vertex">
         attribute vec2 location;
+        /*
+        * création d'un variable de sortie supplémentaire qui pourra être
+        * récupérée par le fragment shader. Le mot clé varying indique que
+        * le GPU doit effectuer une interpolation pour chaque fragment.
+        */
         varying vec2 position;
 
         void main()
         {
            gl_Position = vec4(location, 0, 1);
-           position = location.xy;
+           position = location;
         }
     </script>
 
     <script id ="fragmentShader" type="x-shader/x-fragment">
+        /*
+        * Lorsque le fragment shader utilise des nombres flottants, il faut
+        * infiquer la précision de calcul : mediump ou highp
+        */ 
         precision mediump float;
+        // récupération de la variable en sortie du vertex shader (après interpolation).
         varying vec2 position;
 
         const vec2 center = vec2(0.0, 0.0);
@@ -27,6 +37,7 @@
 
         void main()
         {
+            // facteur de variation de la couleur en fonction de la distance au centre.
             float factor = 1.0 - pow(distance(center, position), 5.0);
 
             gl_FragColor = vec4(color * factor, 1.0);
@@ -34,9 +45,11 @@
     </script>
 
     <script type="text/javascript">
+        // récupération contexte WebGL
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
 
+        // compilation du vertex shader
         const vertexShader = gl.createShader(gl.VERTEX_SHADER);
         gl.shaderSource(vertexShader, document.getElementById("vertexShader").text);
         gl.compileShader(vertexShader);
@@ -44,6 +57,7 @@
             throw "Vertex shader error: " + gl.getShaderInfoLog(vertexShader);
         }
 
+        // compilation du fragment shader
         const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
         gl.shaderSource(fragmentShader, document.getElementById("fragmentShader").text);
         gl.compileShader(fragmentShader);
@@ -51,6 +65,7 @@
             throw "Fragment shader error: " + gl.getShaderInfoLog(fragmentShader);
         }
 
+        // link du programme shader
         const shaderProgram = gl.createProgram();
         gl.attachShader(shaderProgram, vertexShader);
         gl.attachShader(shaderProgram, fragmentShader);
@@ -62,6 +77,7 @@
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.enableVertexAttribArray(0);
 
+        // création de la géométrie
         const vertices = [
             -1,  1,
             -1, -1,
@@ -83,6 +99,12 @@
 
         window.addEventListener("load", draw);
     </script>
+
+    <div>
+        <p>Exemple d'interpolation de données pour un fragment shader.</p>
+        
+        <p>Variante : faire un dégadé horizontal du rouge au vert (utiliser la fonction GLSL <strong>mix</strong>).</p>
+    </div>
 
 </body>
 </html>
