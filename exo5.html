@@ -54,13 +54,24 @@
             return shaderProgram;
         }
         
+        // récupération contexte WebGL
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
+        gl.clearColor(0.0, 0.0, 0.0, 0.0);
+
+        // création du programme shader
         const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
         gl.useProgram(shaderProgram);
         const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.enableVertexAttribArray(0);
+
+        // création de la géométrie
+        
+        /*
+        * Le tableau des coordonnées qui décrit un cube par une succession de 
+        * coordonnées de vertices qui forment des triangles.
+        */
         const vertices = [
              1.0, -1.0, -1.0,
             -1.0,  1.0, -1.0, 
@@ -115,8 +126,15 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
+        /**
+        * On positionne la dimension de la ligne.
+        */
         gl.lineWidth(2.5);
 
+        /*
+        * On crée une matrice de projection de perspective 3D.
+        * Une matrice de projection 3D est une matrice 4x4.
+        */
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, 45 * Math.PI / 180, canvas.width / canvas.height, 0, 100);
 
@@ -130,15 +148,33 @@
             if (elapsedTime - deltaTime > fps) {
                 deltaTime = elapsedTime;
                 
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
+                /*
+                * Création de la matrice MVP (model view projection)
+                */
                 const mvpMatrix = mat4.create();
+                /*
+                * on applique la matrice de projection
+                */
                 mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
+                /*
+                * on applique la transformation de vue (passage du repère local
+                * au repère du monde)
+                */
                 mat4.translate(mvpMatrix, mvpMatrix, [0, 0, -5]);
+                /*
+                * on applique la transformation locale : rotation locale du cube
+                */
                 mat4.rotate(mvpMatrix, mvpMatrix, deltaTime / 1000, [.9, -.7, 0]);
 
                 gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
                 gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+                /*
+                * On spécifie un mode de dessin en ligne.
+                */
                 gl.drawArrays(gl.LINE_STRIP, 0, vertices.length / 3);
             }
         }
@@ -146,5 +182,10 @@
         window.addEventListener("load", draw);
     </script>
 
+    <div>
+        <p>Exemple d'animation 3D en utilisant des matrices de transformation et de projection perspective.</p>
+        
+        <p>Variante : utiliser glMatrix pour créer une matrice de projection orthographique avec la méthode mat4.ortho(out, left, right, bottom, top, near, far)</p>
+    </div>
 </body>
 </html>
