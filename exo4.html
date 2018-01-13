@@ -41,6 +41,12 @@
         // récupération contexte WebGL
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
+        
+        /*
+        * On positionne la couleur par défaut. Avec WebGL, le navigateur Web
+        * réalise du compositing d'images avec le canvas. Il peut être intéressant
+        * de positionner l'alpha à 0 pour avoir un viewport transparent.
+        */
         gl.clearColor(0.0, 0.0, 0.0, 0.0);
 
         // compilation du vertex shader
@@ -159,6 +165,9 @@
             if (elapsedTime - deltaTime > fps) {
                 deltaTime = elapsedTime;
                 
+                /*
+                * On commence par effacer le framebuffer.
+                */
                 gl.clear(gl.COLOR_BUFFER_BIT);        
 
                 /*
