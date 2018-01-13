@@ -8,31 +8,66 @@
     <canvas id="glCanvas" width="800" height="600"></canvas>
 
     <script id="vertexShader" type="x-shader/x-vertex">
+        /*
+        * Ce shader est implémentation simplifié du modèle de Gouraud.
+        */
+
         attribute vec3 location;
         attribute vec3 normal;
         
         varying vec3 fragColor;
 
-        uniform mat3 normalMatrix;
+        /*
+        * les matrices de transformation
+        */
         uniform mat4 mvMatrix;
         uniform mat4 mvpMatrix;
-        
+        uniform mat3 normalMatrix;
+
+        /*
+        * coordonnées de la source lumineuse (world space coordinates)
+        */        
         const vec3 wsLightPosition = vec3(-3.0, 3.0, .0);
+        /*
+        * couleur de la lumière
+        */        
         const vec3 lightDiffuse = vec3(.9, .9, .9);
+        /*
+        * couleur du matériau
+        */        
         const vec3 materialDiffuse = vec3(.8, .0, .0);
 
         void main()
         {
-           vec3 wsPosition = (mvMatrix * vec4(location, 1.0)).xyz;
-           vec3 wsNormal = normalize(normalMatrix * normal);
-           vec3 wsLightVector = normalize(wsLightPosition - wsPosition);
-           
-           float lambertian = dot(wsNormal, wsLightVector);
-           
-           vec3 diffuse = lightDiffuse * materialDiffuse * clamp(lambertian, .0, 1.0);
+            /*
+            * On transforme la position et la normal de l'espace de coordonnées
+            * local à l'espace de coordonnées du monde (world space coodinates)
+            */
+            vec3 wsPosition = (mvMatrix * vec4(location, 1.0)).xyz;
+            vec3 wsNormal = normalize(normalMatrix * normal);
+            /*
+            * Pour une lumière positionnelle, le vecteur lumière est donné
+            * par la position de la lumière moins la position du vertex.
+            */
+            vec3 wsLightVector = normalize(wsLightPosition - wsPosition);
 
-           gl_Position = mvpMatrix * vec4(location, 1.0);
-           fragColor = diffuse;
+            /*
+            * Calcul du coefficient de Lambert qui correspond au cosinus de l'angle
+            * entre le vecteur lumière et le vecteur normal.
+            */
+            float lambertian = dot(wsLightVector, wsNormal);
+
+            /*
+            * Calcul de la composante diffuse grâce au coefficient de Lambert
+            * et aux caractèristiques de la lumière et du matériau
+            */
+            vec3 diffuse = lightDiffuse * materialDiffuse * clamp(lambertian, .0, 1.0);
+
+            gl_Position = mvpMatrix * vec4(location, 1.0);
+            /*
+            * On passe la couleur du vertex au fragment shader
+            */
+            fragColor = diffuse;
         }
     </script>
 
@@ -73,20 +108,29 @@
             return shaderProgram;
         }
         
+        // récupération contexte WebGL
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
+        gl.clearColor(0.0, 0.0, 0.0, 0.0);
         gl.enable(gl.CULL_FACE);
-        
+
+        // création du programme shader
         const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
         gl.useProgram(shaderProgram);
         const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
         const uniformMvMatrixPosition = gl.getUniformLocation(shaderProgram, "mvMatrix");
         const uniformNormalMatrixPosition = gl.getUniformLocation(shaderProgram, "normalMatrix");
+
+        /*
+        * On positionne l'indice 0 pour l'attribut représentant la position.
+        * On positionne l'indice 1 pour l'attribut représentant le vecteur normal.
+        */
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.bindAttribLocation(shaderProgram, 1, 'normal');
         gl.enableVertexAttribArray(0);
         gl.enableVertexAttribArray(1);
 
+        // Création de la géométrie.
         const locations = [
              1.0, -1.0, -1.0,
             -1.0,  1.0, -1.0, 
@@ -137,6 +181,11 @@
             -1.0,  1.0,  1.0,
         ]
         
+        /*
+        * On calcul la normale pour chaque vertex afin de construire le buffer
+        * final des données qui contiendra pour chaque vertex sa position et
+        * son vecteur normal.
+        */
         function computeTriangleNormal(x1, y1, z1, x2, y2, z2, x3, y3, z3) {
             const vec1 = vec3.fromValues(x2 - x1, y2 - y1, z2 - z1);
             const vec2 = vec3.fromValues(x3 - x1, y3 - y1, z3 - z1);
@@ -164,6 +213,7 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
+        // création de la matrice de projection
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, 45 * Math.PI / 180, canvas.width / canvas.height, 0, 100);
 
@@ -177,14 +227,23 @@
             if (elapsedTime - deltaTime > fps) {
                 deltaTime = elapsedTime;
                 
+                /*
+                * Création de la matrice Modèle Vue
+                */
                 const mvMatrix = mat4.create();
                 mat4.translate(mvMatrix, mvMatrix, [0, 0, -5]);
                 mat4.rotate(mvMatrix, mvMatrix, deltaTime / 1000, [.9, -.7, 0]);
 
+                /*
+                * Création de la matrice modèle vue projection
+                */ 
                 const mvpMatrix = mat4.create();
                 mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
                 mat4.multiply(mvpMatrix, mvpMatrix, mvMatrix);
                 
+                /*
+                * Création de la matrice de transformation des normals
+                */
                 const normalMatrix = mat3.create();
                 mat3.fromMat4(normalMatrix, mvMatrix);
                 mat3.invert(normalMatrix, normalMatrix);
@@ -203,6 +262,12 @@
 
         window.addEventListener("load", draw);
     </script>
+
+    <div>
+        <p>Exemple de shading simple avec le modèle de Gouraud : calcul de la couleur diffuse (coefficient de Lambert).</p>
+        <p>Variante : utiliser un uniform pour spécifier la position de la lumière.</p>
+        <p>Variante : éclairer le modèle avec deux sources de lumière.</p>
+    </div>
 
 </body>
 </html>

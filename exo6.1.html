@@ -23,8 +23,8 @@
         const vec3 lightSpecular = vec3(.8);
         const vec3 materialAmbiant = vec3(.3, .0, .0);
         const vec3 materialDiffuse = vec3(.8, .0, .0);
-        const vec3 materialSpecular = vec3(.6);
-        const float materialSpecularShininess = .8;
+        const vec3 materialSpecular = vec3(.9);
+        const float materialSpecularShininess = 5.0;
 
         void main()
         {
@@ -33,7 +33,7 @@
            vec3 wsLightVector = normalize(wsLightPosition - wsPosition);
            vec3 wsViewVector = normalize(-wsPosition);
            
-           float lambertian = dot(wsNormal, wsLightVector);
+           float lambertian = dot(wsLightVector, wsNormal);
            
            vec3 ambiant = lightAmbiant * materialAmbiant;
            vec3 diffuse = lightDiffuse * materialDiffuse * clamp(lambertian, .0, 1.0);
