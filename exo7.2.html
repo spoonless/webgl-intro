@@ -131,6 +131,7 @@
         
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
+        gl.clearColor(0.0, 0.0, 0.0, 0.0);
 
         const backgroundShaderProgram = createShaderProgram(document.getElementById("backgroundVertexShader"), document.getElementById("backgroundFragmentShader"));
         gl.useProgram(backgroundShaderProgram);

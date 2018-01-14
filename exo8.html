@@ -120,6 +120,7 @@
         
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
+        gl.clearColor(0.0, 0.0, 0.0, 0.0);
 
         const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
         gl.useProgram(shaderProgram);
@@ -199,10 +200,12 @@
             if (elapsedTime - deltaTime > fps) {
                 deltaTime = elapsedTime;
                 
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
                 const mvMatrix = mat4.create();
                 mat4.translate(mvMatrix, mvMatrix, [0, 0, -3]);
-                mat4.rotate(mvMatrix, mvMatrix, Math.PI * (mouse.x -.5), [.0, 1.0, .0]);
-                mat4.rotate(mvMatrix, mvMatrix, Math.PI * (mouse.y -.5), [1.0, .0, .0]);
+                mat4.rotateX(mvMatrix, mvMatrix, Math.PI * (mouse.y -.5));
+                mat4.rotateY(mvMatrix, mvMatrix, Math.PI * (mouse.x -.5));
 
                 const mvpMatrix = mat4.create();
                 mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);

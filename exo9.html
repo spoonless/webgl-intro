@@ -184,8 +184,8 @@
                 
                 const mvpMatrix = mat4.create();
                 mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
-                mat4.rotate(mvpMatrix, mvpMatrix, Math.PI * (mouse.y -.5), [1.0, .0, .0]);
-                mat4.rotate(mvpMatrix, mvpMatrix, Math.PI * (mouse.x * 2 -.5), [.0, 1.0, .0]);
+                mat4.rotateX(mvpMatrix, mvpMatrix, Math.PI * (mouse.y -.5));
+                mat4.rotateY(mvpMatrix, mvpMatrix, Math.PI * (mouse.x * 2 -.5));
                 
                 gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
 
