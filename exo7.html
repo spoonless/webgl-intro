@@ -111,6 +111,8 @@
         const verticesBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
+        gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
 
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -120,6 +122,10 @@
         gl.generateMipmap(gl.TEXTURE_2D);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
   
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.uniform1i(uniformSamplerPosition, 0);
+
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, 45 * Math.PI / 180, canvas.width / canvas.height, 0, 100);
 
@@ -140,14 +146,6 @@
                 mat4.rotate(mvpMatrix, mvpMatrix, Math.PI * (mouse.y -.5), [1.0, .0, .0]);
 
                 gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
-
-                gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-                gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
-                gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
-
-                gl.activeTexture(gl.TEXTURE0);
-                gl.bindTexture(gl.TEXTURE_2D, texture);
-                gl.uniform1i(uniformSamplerPosition, 0);
 
                 gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 5);
             }

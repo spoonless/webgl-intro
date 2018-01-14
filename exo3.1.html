@@ -87,6 +87,7 @@
         const verticesBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
         const startTime = new Date().getTime();
         const fps = 1000 / 25;
@@ -99,8 +100,6 @@
                 deltaTime = elapsedTime;
                 gl.uniform1f(uniformTimePosition, elapsedTime / 1000.0);
 
-                gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-                gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
                 gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
             }
         }

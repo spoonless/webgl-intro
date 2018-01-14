@@ -186,16 +186,17 @@
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   
-        const projectionMatrix = mat4.create();
-        const canvasRatio = canvas.width / canvas.height;
-        mat4.ortho(projectionMatrix, -canvasRatio * 2, canvasRatio * 2, -2, 2, 0.1, 10);
-
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+        const canvasRatio = canvas.width / canvas.height;
+        const projectionMatrix = mat4.create();
+        mat4.ortho(projectionMatrix, -canvasRatio * 2, canvasRatio * 2, -2, 2, 0.1, 10);
 
         const startTime = new Date().getTime();
         const fps = 1000 / 60;
         var deltaTime = 0;
+
         function draw() {
             requestAnimationFrame(draw);
 
@@ -206,14 +207,15 @@
                 gl.clear(gl.COLOR_BUFFER_BIT);
                 
                 gl.useProgram(backgroundShaderProgram);
-                gl.enableVertexAttribArray(0);
-                gl.disableVertexAttribArray(1);
-
                 gl.uniform1f(uniformTimePosition, elapsedTime / 1000.0);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, backgroundVerticesBuffer);
+                gl.enableVertexAttribArray(0);
                 gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
                 gl.drawArrays(gl.TRIANGLES, 0, backgroundVertices.length / 2);
+
+                gl.disableVertexAttribArray(0);
 
                 const mvpMatrix = mat4.create();
                 mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
@@ -221,12 +223,11 @@
                 mat4.rotate(mvpMatrix, mvpMatrix, deltaTime / 300, [.0, 1.0, .0]);
 
                 gl.useProgram(shaderProgram);
-                gl.enableVertexAttribArray(0);
-                gl.enableVertexAttribArray(1);
-
                 gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+                gl.enableVertexAttribArray(0);
+                gl.enableVertexAttribArray(1);
                 gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
                 gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
 
@@ -235,6 +236,10 @@
                 gl.uniform1i(uniformSamplerPosition, 0);
                 
                 gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 5);
+
+                gl.disableVertexAttribArray(0);
+                gl.disableVertexAttribArray(1);
+                gl.bindTexture(gl.TEXTURE_2D, null);
             }
         }
 

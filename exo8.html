@@ -160,25 +160,38 @@
         const verticesBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
+        gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 32, 12);
+        gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 32, 20);
+
 
         const diffuseTexture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, diffuseTexture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("diffuseTexture"));
-        gl.generateMipmap(gl.TEXTURE_2D);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+        gl.generateMipmap(gl.TEXTURE_2D);
 
         const normalTexture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, normalTexture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("normalTexture"));
-        gl.generateMipmap(gl.TEXTURE_2D);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+        gl.generateMipmap(gl.TEXTURE_2D);
           
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, diffuseTexture);
+        gl.uniform1i(uniformDiffuseSamplerPosition, 0);
+
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, normalTexture);
+        gl.uniform1i(uniformNormalSamplerPosition, 1);
+
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, 45 * Math.PI / 180, canvas.width / canvas.height, 0, 100);
 
         const startTime = new Date().getTime();
         const fps = 1000 / 60;
         var deltaTime = 0;
+
         function draw() {
             requestAnimationFrame(draw);
 
@@ -203,19 +216,6 @@
                 gl.uniformMatrix4fv(uniformMvMatrixPosition, false, mvMatrix);
                 gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
                 gl.uniformMatrix3fv(uniformNormalMatrixPosition, false, normalMatrix);
-
-                gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-                gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
-                gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 32, 12);
-                gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 32, 20);
-                
-                gl.activeTexture(gl.TEXTURE0);
-                gl.bindTexture(gl.TEXTURE_2D, diffuseTexture);
-                gl.uniform1i(uniformDiffuseSamplerPosition, 0);
-
-                gl.activeTexture(gl.TEXTURE1);
-                gl.bindTexture(gl.TEXTURE_2D, normalTexture);
-                gl.uniform1i(uniformNormalSamplerPosition, 1);
 
                 gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 8);
             }

@@ -120,6 +120,7 @@
         const verticesBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
 
         /*
         * Création de la matrice de projection 3D
@@ -147,8 +148,6 @@
 
                 gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
 
-                gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-                gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
                 /*
                 * On spécifie un mode de dessin en triangle (rendu des faces).
                 */

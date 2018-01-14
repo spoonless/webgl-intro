@@ -84,7 +84,7 @@
 
         /*
         * Vertices de la surface 2D. Les coordonnées des vertices de la surface
-        * correspondent au format du viewport WebGL afin de couvrir tout le canvas.
+        * correspondent au format du viewport WebGL afin de couvrir tout le canevas.
         */
         const vertices = [
             -1,  1,
@@ -103,13 +103,19 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
+        /*
+        * Définition de l'attribut 0 du programme en l'associant au buffer courant.
+        * On déclare que l'attribut est composé de deux nombres de type float.
+        */
+        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
         function draw() {
             /*
-            * Activation du buffer, définition de l'attribut 0 et appel au
-            * shader courant sur le GPU.
+            * On lance l'opération d'écriture sur le drawing buffer.
+            * Une fois l'opération d'écriture terminée, WebGL présente l'image
+            * au compositeur du navigateur qui va se charger de l'afficher dans 
+            * la zone du canevas.
             */
-            gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-            gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
             gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 2);
         }
 

@@ -158,6 +158,9 @@
         const verticesBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
+        gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+
 
         const diffuseTexture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, diffuseTexture);
@@ -185,10 +188,6 @@
                 mat4.rotate(mvpMatrix, mvpMatrix, Math.PI * (mouse.x * 2 -.5), [.0, 1.0, .0]);
                 
                 gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
-
-                gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-                gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
-                gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
 
                 gl.uniform4fv(uniformLineColorPosition, [.0, .0, .0, .0]);
                 gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 5);
