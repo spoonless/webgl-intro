@@ -10,6 +10,9 @@
     <img id="diffuseTexture" style="display:none;" src="images/texture.jpg">
 
     <script id="vertexShader" type="x-shader/x-vertex">
+        /*
+        * Un vertex est défini par sa position et ses coordonnées de texture UV.
+        */
         attribute vec3 location;
         attribute vec2 uv;
 
@@ -20,8 +23,8 @@
 
         void main()
         {
-           gl_Position = mvpMatrix * vec4(location, 1.0);
            fragUvCoord = uv;
+           gl_Position = mvpMatrix * vec4(location, 1.0);
         }
     </script>
 
@@ -30,6 +33,10 @@
         varying vec3 fragColor;
         varying vec2 fragUvCoord;
         
+        /*
+        * Un sampler 2D permet de calculer une interpolation de la couleur
+        * à partir d'une image et de coordonnées de texture UV.
+        */
         uniform sampler2D sampler;
 
         void main()
@@ -40,6 +47,9 @@
 
     <script type="text/javascript" src="lib/gl-matrix-min.js"></script>
     <script type="text/javascript">
+        /*
+        * On suit les coordonnées de la souris sur une échelle entre 0 et 1.
+        */
         const mouse = {
             "x": .5,
             "y": .5,
@@ -80,32 +90,34 @@
             return shaderProgram;
         }
         
+        // récupération contexte WebGL
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
 
+        // création du programme shader
         const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
         gl.useProgram(shaderProgram);
         const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
+        /*
+        * On récupère le sampler de texture pour l'associer à la texture à afficher.
+        */
         const uniformSamplerPosition = gl.getUniformLocation(shaderProgram, "sampler");
+
+        // activation des indices pour les attributs d'un vertex
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.bindAttribLocation(shaderProgram, 1, 'uv');
         gl.enableVertexAttribArray(0);
         gl.enableVertexAttribArray(1);
 
+        // création de la géométrie
         const vertices = [
-            -1.0, -1.0, 0.0,
-            0.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, 1.0,
-            -1.0, 1.0, 0.0,
-            0.0, 1.0,
+            -1.0, -1.0, 0.0,    0.0, 0.0,
+             1.0,  1.0, 0.0,    1.0, 1.0,
+            -1.0,  1.0, 0.0,    0.0, 1.0,
             
-            1.0, 1.0, 0.0,
-            1.0, 1.0,
-            -1.0, -1.0, 0.0,
-            0.0, 0.0,
-            1.0, -1.0, 0.0,
-            1.0, 0.0
+             1.0,  1.0, 0.0,    1.0, 1.0,
+            -1.0, -1.0, 0.0,    0.0, 0.0,
+             1.0, -1.0, 0.0,    1.0, 0.0
         ]
         
         const verticesBuffer = gl.createBuffer();
@@ -114,6 +126,9 @@
         gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
         gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
 
+        /*
+        * Création de la texture
+        */
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -122,10 +137,15 @@
         gl.generateMipmap(gl.TEXTURE_2D);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
   
+        /*
+        * Association de la texture au canal 0 de texture.
+        * Association du sampler 2D du programme au canal 0 de texture.
+        */
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.uniform1i(uniformSamplerPosition, 0);
 
+        // création de la matrice de projection
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, 45 * Math.PI / 180, canvas.width / canvas.height, 0, 100);
 
@@ -139,6 +159,7 @@
             if (elapsedTime - deltaTime > fps) {
                 deltaTime = elapsedTime;
                 
+                // Création de la matrice MVP                
                 const mvpMatrix = mat4.create();
                 mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
                 mat4.translate(mvpMatrix, mvpMatrix, [0, 0, -4]);
@@ -153,6 +174,11 @@
 
         window.addEventListener("load", draw);
     </script>
+
+    <div>
+        <p>Exemple d'utilisation de texture.</p>
+        <p>Variante : modifier les coordonnées UV pour répéter l'image sur la surface.</p>
+    </div>
 
 </body>
 </html>
