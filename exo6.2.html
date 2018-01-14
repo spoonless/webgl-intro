@@ -31,7 +31,7 @@
 
         varying vec3 fragPosition;
         varying vec3 fragNormal;
-
+        
         const vec3 wsLightPosition = vec3(-3.0, 3.0, .0);
         const vec3 lightDiffuse = vec3(.7);
         const vec3 lightAmbiant = vec3(.5);
@@ -48,10 +48,10 @@
            vec3 wsLightVector = normalize(wsLightPosition - wsPosition);
            vec3 wsViewVector = normalize(-wsPosition);
            
-           float lambertian = dot(wsNormal, wsLightVector);
+           float lambertian = clamp(dot(wsNormal, wsLightVector), .0, 1.0);
            
            vec3 ambiant = lightAmbiant * materialAmbiant;
-           vec3 diffuse = lightDiffuse * materialDiffuse * clamp(lambertian, .0, 1.0);
+           vec3 diffuse = lightDiffuse * materialDiffuse * lambertian;
            vec3 specular = vec3(.0, .0, .0);
            if (lambertian > .0)
            {
