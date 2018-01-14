@@ -9,7 +9,7 @@
 
     <script id="vertexShader" type="x-shader/x-vertex">
         /*
-        * Ce shader est implémentation simplifié du modèle de Gouraud.
+        * Ce shader est implémentation simplifiée du modèle de Gouraud.
         */
 
         attribute vec3 location;
@@ -59,7 +59,7 @@
 
             /*
             * Calcul de la composante diffuse grâce au coefficient de Lambert
-            * et aux caractèristiques de la lumière et du matériau
+            * et aux caractéristiques de la lumière et du matériau
             */
             vec3 diffuse = lightDiffuse * materialDiffuse * clamp(lambertian, .0, 1.0);
 
@@ -182,9 +182,7 @@
         ]
         
         /*
-        * On calcul la normale pour chaque vertex afin de construire le buffer
-        * final des données qui contiendra pour chaque vertex sa position et
-        * son vecteur normal.
+        * Calcul du vecteur normal pour un triangle.
         */
         function computeTriangleNormal(x1, y1, z1, x2, y2, z2, x3, y3, z3) {
             const vec1 = vec3.fromValues(x2 - x1, y2 - y1, z2 - z1);
@@ -197,6 +195,11 @@
         
         const vertices = []
         
+        /*
+        * On calcule la normale pour chaque vertex afin de construire le buffer
+        * final des données qui contiendra pour chaque vertex sa position et
+        * son vecteur normal.
+        */
         for(var i = 0; i < locations.length; i+= 9) {
             const normal = computeTriangleNormal(locations[i], locations[i+1], locations[i+2], 
                                                  locations[i+3], locations[i+4], locations[i+5], 
@@ -250,7 +253,7 @@
                 mat4.multiply(mvpMatrix, mvpMatrix, mvMatrix);
                 
                 /*
-                * Création de la matrice de transformation des normals
+                * Création de la matrice de transformation des normales
                 */
                 const normalMatrix = mat3.create();
                 mat3.fromMat4(normalMatrix, mvMatrix);
