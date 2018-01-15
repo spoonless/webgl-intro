@@ -12,8 +12,8 @@
     <img id="normalTexture" style="display:none;" src="images/Brick_Wall_003_normal.jpg">
 
     <div>
-        <input id="useNormalMapCheckBox" type="checkbox" checked onchange="document.getElementById('glCanvas').useNormalMap = this.checked"> Utilisation de la normal map
         <input id="useDiffuseMapCheckBox" type="checkbox" checked onchange="document.getElementById('glCanvas').useDiffuseMap = this.checked"> Utilisation de la diffuse map
+        <input id="useNormalMapCheckBox" type="checkbox" checked onchange="document.getElementById('glCanvas').useNormalMap = this.checked"> Utilisation de la normal map
     </div>
 
     <script id="vertexShader" type="x-shader/x-vertex">
@@ -54,7 +54,7 @@
         const vec3 lightAmbiant = vec3(.2);
         const vec3 lightDiffuse = vec3(.8);
         const vec3 lightSpecular = vec3(.9);
-        const vec3 materialSpecular = vec3(.08);
+        const vec3 materialSpecular = vec3(.06);
         const float materialSpecularShininess = 16.0;
 
         void main()
@@ -62,18 +62,14 @@
             vec3 wsPosition = fragPosition;
             vec3 wsLightVector = normalize(wsLightPosition - wsPosition);
             vec3 wsViewVector = normalize(-wsPosition);
-            vec3 wsNormal;
+            vec3 wsNormal = fragNormal;
 
             if(useNormalMap > 0)
             {
                 vec3 deltaNormal = texture2D(normalSampler, fragUvCoord).xyz;
-                wsNormal = normalize(((2.0 * deltaNormal) - 1.0) + fragNormal);
+                wsNormal = ((2.0 * deltaNormal) - 1.0) + fragNormal;
             }
-            else
-            {
-                wsNormal = normalize(fragNormal);
-            }
-            wsNormal = normalMatrix * wsNormal;
+            wsNormal = normalize(normalMatrix * wsNormal);
 
             float lambertian = clamp(dot(wsNormal, wsLightVector), .0, 1.0);
 
