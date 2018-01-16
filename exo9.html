@@ -10,8 +10,6 @@
         <input type="checkbox" onchange="document.getElementById('glCanvas').wireframe = this.checked"> Affichage du maillage
     </div>
     
-    <img id="diffuseTexture" style="display:none;" src="images/HDR_040_Field_Bg.jpg">
-
     <script id="vertexShader" type="x-shader/x-vertex">
         attribute vec3 location;
         attribute vec2 uv;
@@ -153,7 +151,7 @@
         gl.useProgram(shaderProgram);
         const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
         const uniformLineColorPosition = gl.getUniformLocation(shaderProgram, "lineColor");
-        const uniformDiffuseSamplerPosition = gl.getUniformLocation(shaderProgram, "diffuseSampler");
+        const uniformSamplerPosition = gl.getUniformLocation(shaderProgram, "diffuseSampler");
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.bindAttribLocation(shaderProgram, 1, 'uv');
         gl.enableVertexAttribArray(0);
@@ -167,14 +165,20 @@
         gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
         gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
 
+        function loadTexture(element) {
+            const texture = gl.createTexture();
 
-        const diffuseTexture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, diffuseTexture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("diffuseTexture"));
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+            // activation de la texture
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, element);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
           
+            gl.uniform1i(uniformSamplerPosition, 0);
+        }
+        
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, 45 * Math.PI / 180, canvas.width / canvas.height, 0, 100);
 
@@ -283,5 +287,8 @@ const vertices = UvSphere(16);
 </pre>
         
     </div>
+
+    <img style="display:none;" src="images/HDR_040_Field_Bg.jpg" onload="loadTexture(this)">
+
 </body>
 </html>

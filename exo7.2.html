@@ -33,8 +33,6 @@
 
     <div id=text>WebGL permet de réaliser du compositing avec des éléments HTML, du style CSS et du rendu 3D/2D.</div>
     
-    <img id="diffuseTexture" style="display:none;" src="images/html5_logo.png">
-
     <script id="backgroundVertexShader" type="x-shader/x-vertex">
         attribute vec2 location;
         varying vec2 position;
@@ -188,15 +186,21 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
-        // création de la texture
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("diffuseTexture"));
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        var texture = null;
+        
+        function loadTexture(element) {
+            texture = gl.createTexture();
+
+            // activation de la texture
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+            gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, element);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        }
 
         // création de la matrice de projection
         const canvasRatio = canvas.width / canvas.height;
@@ -238,39 +242,42 @@
                 gl.drawArrays(gl.TRIANGLES, 0, backgroundVertices.length / 2);
 
                 gl.disableVertexAttribArray(0);
-
-                /*
-                * rendu du logo
-                */
-                // calcul de la matrice MVP
-                const mvpMatrix = mat4.create();
-                mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
-                mat4.translate(mvpMatrix, mvpMatrix, [-2.2, 0, -3]);
-                mat4.rotate(mvpMatrix, mvpMatrix, deltaTime / 300, [.0, 1.0, .0]);
-
-                gl.useProgram(shaderProgram);
-                gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
-
-                gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-                gl.enableVertexAttribArray(0);
-                gl.enableVertexAttribArray(1);
-                gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
-                gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
-
-                gl.activeTexture(gl.TEXTURE0);
-                gl.bindTexture(gl.TEXTURE_2D, texture);
-                gl.uniform1i(uniformSamplerPosition, 0);
                 
-                gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 5);
+                if (texture != null) {
+                    /*
+                    * rendu du logo
+                    */
+                    // calcul de la matrice MVP
+                    const mvpMatrix = mat4.create();
+                    mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
+                    mat4.translate(mvpMatrix, mvpMatrix, [-2.2, 0, -3]);
+                    mat4.rotate(mvpMatrix, mvpMatrix, deltaTime / 300, [.0, 1.0, .0]);
 
-                gl.disableVertexAttribArray(0);
-                gl.disableVertexAttribArray(1);
-                gl.bindTexture(gl.TEXTURE_2D, null);
+                    gl.useProgram(shaderProgram);
+                    gl.uniformMatrix4fv(uniformMvpMatrixPosition, false, mvpMatrix);
+
+                    gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+                    gl.enableVertexAttribArray(0);
+                    gl.enableVertexAttribArray(1);
+                    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
+                    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+
+                    gl.activeTexture(gl.TEXTURE0);
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+                    gl.uniform1i(uniformSamplerPosition, 0);
+                    
+                    gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 5);
+
+                    gl.disableVertexAttribArray(0);
+                    gl.disableVertexAttribArray(1);
+                    gl.bindTexture(gl.TEXTURE_2D, null);
+                }
             }
         }
 
         window.addEventListener("load", draw);
     </script>
 
+    <img id="diffuseTexture" style="display:none;" src="images/html5_logo.png" onload="loadTexture(this)">
 </body>
 </html>

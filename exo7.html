@@ -7,9 +7,6 @@
 <body>
     <canvas id="glCanvas" style="background: #00B7FF;" width="800" height="600"></canvas>
     
-    <!-- élément contenant la texture -->
-    <img id="diffuseTexture" style="display:none;" src="images/texture.jpg">
-
     <script id="vertexShader" type="x-shader/x-vertex">
         /*
         * Un vertex est défini par sa position et ses coordonnées de texture UV.
@@ -142,31 +139,35 @@
         */
         gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
         gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+        
+        function loadTexture(element) {
+            /*
+            * Création de la texture
+            */
+            const texture = gl.createTexture();
 
-        /*
-        * Création de la texture
-        */
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        /*
-        * Chargement de la texture à partir de la balise img
-        */
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("diffuseTexture"));
-        /*
-        * On ne charge que le premier niveau (0) de mipmap et on demande à WebGL
-        * de créer les autres.
-        */
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-  
-        /*
-        * Association de la texture au canal 0 de texture.
-        * Association du sampler 2D du programme au canal 0 de texture.
-        */
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.uniform1i(uniformSamplerPosition, 0);
+            /*
+            * Association de la texture au canal 0 de texture.
+            */
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+            /*
+            * Chargement de la texture à partir de la balise img
+            */
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, element);
+            /*
+            * On ne charge que le premier niveau (0) de mipmap et on demande à WebGL
+            * de créer les autres.
+            */
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+      
+            /*
+            * Association du sampler 2D du programme au canal 0 de texture.
+            */
+            gl.uniform1i(uniformSamplerPosition, 0);
+        }
 
         // création de la matrice de projection
         const projectionMatrix = mat4.create();
@@ -204,6 +205,9 @@
         <p>Exemple d'utilisation de texture.</p>
         <p>Variante : modifier les coordonnées UV pour répéter l'image sur la surface.</p>
     </div>
+
+    <!-- élément contenant la texture -->
+    <img style="display:none;" src="images/texture.jpg" onload="loadTexture(this)">
 
 </body>
 </html>

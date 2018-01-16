@@ -7,8 +7,6 @@
 <body>
     <canvas id="glCanvas" style="background: #00B7FF;" width="800" height="600"></canvas>
     
-    <img id="diffuseTexture" style="display:none;" src="images/html5_logo.png">
-
     <script id="vertexShader" type="x-shader/x-vertex">
         attribute vec3 location;
         attribute vec2 uv;
@@ -105,45 +103,47 @@
         gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
         gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
         
-        // création de la texture
-        const texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        /*
-        * Gestion du canal alpha pour la transparence.
-        * WebGL considère par défaut que la couleur est prémultipliée par canal alpha.
-        * Pour appliquer le canal alpha dans une opération de compositing entre deux
-        * images, on applique la formule :
-        *
-        *  couleur = couleur1 * alpha1 + (1 - alpha1) * couleur2
-        * 
-        * Afin d'éviter une multiplication, on peut stocker dans l'image 1 la couleur
-        * déjà prémultipliée par le canal alpha. On utilise la fonction pixelStore
-        * afin de forcer WebGL à réaliser l'opération de prémultiplication lorsqu'il
-        * va charger la texture dans la mémoire associée au GPU.
-        */
-        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("diffuseTexture"));
-        /*
-        * On empêche la répétition de la texture le long de la géométrie
-        */
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        /*
-        * On passe le filtre de texture à 'linéaire'. Dans ce cas, WebGL n'utilise
-        * plus qu'un seul niveau de résolution pour la texture (désactivation du mipmapping).
-        * Il n'est donc pas nécessaire de fournir plus d'un niveau de résolution ni de demander
-        * à WebGL de générer les niveaux pour nous. Ce mode de filtre permet ainsi
-        * d'utiliser des textures qui ne sont pas carrés et dont les dimensions
-        * ne sont pas des puissances de 2.
-        */
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  
-        // activation de la texture
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.uniform1i(uniformSamplerPosition, 0);
+        function loadTexture(element) {
+            // création de la texture
+            const texture = gl.createTexture();
 
+            // activation de la texture
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+            /*
+            * Gestion du canal alpha pour la transparence.
+            * WebGL considère par défaut que la couleur est prémultipliée par canal alpha.
+            * Pour appliquer le canal alpha dans une opération de compositing entre deux
+            * images, on applique la formule :
+            *
+            *  couleur = couleur1 * alpha1 + (1 - alpha1) * couleur2
+            * 
+            * Afin d'éviter une multiplication, on peut stocker dans l'image 1 la couleur
+            * déjà prémultipliée par le canal alpha. On utilise la fonction pixelStore
+            * afin de forcer WebGL à réaliser l'opération de prémultiplication lorsqu'il
+            * va charger la texture dans la mémoire associée au GPU.
+            */
+            gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, element);
+            /*
+            * On empêche la répétition de la texture le long de la géométrie
+            */
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            /*
+            * On passe le filtre de texture à 'linéaire'. Dans ce cas, WebGL n'utilise
+            * plus qu'un seul niveau de résolution pour la texture (désactivation du mipmapping).
+            * Il n'est donc pas nécessaire de fournir plus d'un niveau de résolution ni de demander
+            * à WebGL de générer les niveaux pour nous. Ce mode de filtre permet ainsi
+            * d'utiliser des textures qui ne sont pas carrés et dont les dimensions
+            * ne sont pas des puissances de 2.
+            */
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      
+            gl.uniform1i(uniformSamplerPosition, 0);
+        }
+        
         // création de la matrice de projection
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, 45 * Math.PI / 180, canvas.width / canvas.height, 0, 100);
@@ -179,5 +179,6 @@
         <p>Exemple d'utilisation de texture avec un canal alpha.</p>
     </div>
     
+    <img style="display:none;" src="images/html5_logo.png" onload="loadTexture(this)">
 </body>
 </html>

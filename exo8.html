@@ -7,10 +7,6 @@
 <body>
     <canvas id="glCanvas" style="background: #00B7FF;" width="800" height="600"></canvas>
 
-    <!-- Les textures à utiliser dans le rendu -->    
-    <img id="diffuseTexture" style="display:none;" src="images/Brick_Wall_003_diffuse.jpg">
-    <img id="normalTexture" style="display:none;" src="images/Brick_Wall_003_normal.jpg">
-
     <div>
         <input id="useDiffuseMapCheckBox" type="checkbox" checked onchange="document.getElementById('glCanvas').useDiffuseMap = this.checked"> Utilisation de la diffuse map
         <input id="useNormalMapCheckBox" type="checkbox" checked onchange="document.getElementById('glCanvas').useNormalMap = this.checked"> Utilisation de la normal map
@@ -189,30 +185,31 @@
         gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
         gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 32, 12);
         gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 32, 20);
+        
+        function loadTexture(element, uniformLocation, numTexture) {
 
+            // création de la texture diffuse
+            const texture = gl.createTexture()
 
+            // activation de la texture
+            gl.activeTexture(gl.TEXTURE0 + numTexture);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, element);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+            gl.generateMipmap(gl.TEXTURE_2D);
+
+            gl.uniform1i(uniformLocation, numTexture);
+        }
+        
         // création de la texture diffuse
-        const diffuseTexture = gl.createTexture()
-        gl.bindTexture(gl.TEXTURE_2D, diffuseTexture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("diffuseTexture"));
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-        gl.generateMipmap(gl.TEXTURE_2D);
+        function loadDiffuseTexture(element) {
+            loadTexture(element, uniformDiffuseSamplerPosition, 0);
+        }
 
         // création de la texture normal
-        const normalTexture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, normalTexture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("normalTexture"));
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-        gl.generateMipmap(gl.TEXTURE_2D);
-
-        // activation des textures          
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, diffuseTexture);
-        gl.uniform1i(uniformDiffuseSamplerPosition, 0);
-
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, normalTexture);
-        gl.uniform1i(uniformNormalSamplerPosition, 1);
+        function loadNormalTexture(element) {
+            loadTexture(element, uniformNormalSamplerPosition, 1);
+        }
 
         // création de la matrice de projection
         const projectionMatrix = mat4.create();
@@ -267,5 +264,8 @@
     <div>
         <p>Exemple avancé de shader : utilisation d'une normal map.</p>
     </div>
+    <!-- Les textures à utiliser dans le rendu -->    
+    <img style="display:none;" src="images/Brick_Wall_003_diffuse.jpg" onload="loadDiffuseTexture(this)">
+    <img style="display:none;" src="images/Brick_Wall_003_normal.jpg" onload="loadNormalTexture(this)">
 </body>
 </html>
