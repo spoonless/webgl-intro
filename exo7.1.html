@@ -82,21 +82,21 @@
         gl.enableVertexAttribArray(0);
         gl.enableVertexAttribArray(1);
 
-        // activation des indices pour les attributs d'un vertex
+        /*
+        * Création de la géométrie.
+        * Le tableau des données décrit chaque vertices avec sa position et ses coordonnées UV.
+        */
         const vertices = [
-            -1.0, -1.0, 0.0,
-            0.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, 1.0,
-            -1.0, 1.0, 0.0,
-            0.0, 1.0,
+        /*
+        *      Position         Coordonnées UV
+        */
+            -1.0, -1.0, 0.0,        0.0, 0.0,
+             1.0,  1.0, 0.0,        1.0, 1.0,
+            -1.0,  1.0, 0.0,        0.0, 1.0,
             
-            1.0, 1.0, 0.0,
-            1.0, 1.0,
-            -1.0, -1.0, 0.0,
-            0.0, 0.0,
-            1.0, -1.0, 0.0,
-            1.0, 0.0
+             1.0,  1.0, 0.0,        1.0, 1.0,
+            -1.0, -1.0, 0.0,        0.0, 0.0,
+             1.0, -1.0, 0.0,        1.0, 0.0
         ]
         
         const verticesBuffer = gl.createBuffer();

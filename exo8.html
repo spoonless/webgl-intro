@@ -6,9 +6,9 @@
 </head>
 <body>
     <canvas id="glCanvas" style="background: #00B7FF;" width="800" height="600"></canvas>
-    
-    <img id="diffuseTexture" style="display:none;" src="images/Brick_Wall_003_diffuse.jpg">
 
+    <!-- Les textures à utiliser dans le rendu -->    
+    <img id="diffuseTexture" style="display:none;" src="images/Brick_Wall_003_diffuse.jpg">
     <img id="normalTexture" style="display:none;" src="images/Brick_Wall_003_normal.jpg">
 
     <div>
@@ -38,6 +38,10 @@
     </script>
 
     <script id ="fragmentShader" type="x-shader/x-fragment">
+        /*
+        * Ce shader est une amélioration du modèle de Phong pour
+        * utiliser les normal maps.
+        */
         precision mediump float;
 
         varying vec3 fragPosition;
@@ -62,10 +66,14 @@
             vec3 wsPosition = fragPosition;
             vec3 wsLightVector = normalize(wsLightPosition - wsPosition);
             vec3 wsViewVector = normalize(-wsPosition);
-            vec3 wsNormal = fragNormal;
+            vec3 wsNormal = normalize(fragNormal);
 
             if(useNormalMap > 0)
             {
+                /*
+                * On modifie le vecteur normal local en fonction de données
+                * de la normal map.
+                */
                 vec3 deltaNormal = texture2D(normalSampler, fragUvCoord).xyz;
                 wsNormal = ((2.0 * deltaNormal) - 1.0) + fragNormal;
             }
@@ -103,7 +111,6 @@
                 document.addEventListener('mouseenter', this.update.bind(this), false);
             }
         }
-        
         mouse.track();
 
         function createShaderFromElement(element) {
@@ -131,10 +138,12 @@
             return shaderProgram;
         }
         
+        // récupération contexte WebGL
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
         gl.clearColor(0.0, 0.0, 0.0, 0.0);
 
+        // création du programme shader
         const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
         gl.useProgram(shaderProgram);
         const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
@@ -144,6 +153,11 @@
         const uniformNormalSamplerPosition = gl.getUniformLocation(shaderProgram, "normalSampler");
         const uniformUseDiffuseMapPosition = gl.getUniformLocation(shaderProgram, "useDiffuseMap");
         const uniformUseNormalMapPosition = gl.getUniformLocation(shaderProgram, "useNormalMap");
+        /*
+        * Dans la description des attributs des vertices, il faut tenir
+        * compte du fait que le buffer contient à la fois des données
+        * de position, des coordonnées de texture et les coordonnées du vecteur normal.
+        */
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.bindAttribLocation(shaderProgram, 1, 'uv');
         gl.bindAttribLocation(shaderProgram, 2, 'normal');
@@ -151,26 +165,22 @@
         gl.enableVertexAttribArray(1);
         gl.enableVertexAttribArray(2);
 
+        /*
+        * Création de la géométrie.
+        * Le tableau des données décrit chaque vertices avec sa position, ses 
+        * coordonnées UV et le vecteur normal.
+        */
         const vertices = [
-            -1.0, -1.0, 0.0,
-            0.0, 0.0,
-            0.0,0.0, 1.0,
-            1.0, 1.0, 0.0,
-            1.0, 1.0,
-            0.0,0.0, 1.0,
-            -1.0, 1.0, 0.0,
-            0.0, 1.0,
-            0.0,0.0, 1.0,
+        /*
+        *       Position        Coordonnées UV       Normal
+        */
+            -1.0, -1.0, 0.0,      0.0, 0.0,       0.0, 0.0, 1.0,
+             1.0,  1.0, 0.0,      1.0, 1.0,       0.0, 0.0, 1.0,
+            -1.0,  1.0, 0.0,      0.0, 1.0,       0.0, 0.0, 1.0,
             
-            1.0, 1.0, 0.0,
-            1.0, 1.0,
-            0.0,0.0, 1.0,
-            -1.0, -1.0, 0.0,
-            0.0, 0.0,
-            0.0,0.0, 1.0,
-            1.0, -1.0, 0.0,
-            1.0, 0.0,
-            0.0,0.0, 1.0,
+             1.0,  1.0, 0.0,      1.0, 1.0,       0.0, 0.0, 1.0,
+            -1.0, -1.0, 0.0,      0.0, 0.0,       0.0, 0.0, 1.0,
+             1.0, -1.0, 0.0,      1.0, 0.0,       0.0, 0.0, 1.0,
         ]
                
         const verticesBuffer = gl.createBuffer();
@@ -181,18 +191,21 @@
         gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 32, 20);
 
 
-        const diffuseTexture = gl.createTexture();
+        // création de la texture diffuse
+        const diffuseTexture = gl.createTexture()
         gl.bindTexture(gl.TEXTURE_2D, diffuseTexture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("diffuseTexture"));
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
         gl.generateMipmap(gl.TEXTURE_2D);
 
+        // création de la texture normal
         const normalTexture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, normalTexture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("normalTexture"));
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
         gl.generateMipmap(gl.TEXTURE_2D);
-          
+
+        // activation des textures          
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, diffuseTexture);
         gl.uniform1i(uniformDiffuseSamplerPosition, 0);
@@ -201,6 +214,7 @@
         gl.bindTexture(gl.TEXTURE_2D, normalTexture);
         gl.uniform1i(uniformNormalSamplerPosition, 1);
 
+        // création de la matrice de projection
         const projectionMatrix = mat4.create();
         mat4.perspective(projectionMatrix, 45 * Math.PI / 180, canvas.width / canvas.height, 0, 100);
 
@@ -220,15 +234,18 @@
                 
                 gl.clear(gl.COLOR_BUFFER_BIT);
 
+                // création de la matrice MV
                 const mvMatrix = mat4.create();
                 mat4.translate(mvMatrix, mvMatrix, [0, 0, -3]);
                 mat4.rotateX(mvMatrix, mvMatrix, Math.PI * (mouse.y -.5));
                 mat4.rotateY(mvMatrix, mvMatrix, Math.PI * (mouse.x -.5));
 
+                // création de la matrice MVP
                 const mvpMatrix = mat4.create();
                 mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
                 mat4.multiply(mvpMatrix, mvpMatrix, mvMatrix);
                 
+                // création de la matrice de transformation des vecteurs normaux
                 const normalMatrix = mat3.create();
                 mat3.fromMat4(normalMatrix, mvMatrix);
                 mat3.invert(normalMatrix, normalMatrix);
@@ -247,5 +264,8 @@
         window.addEventListener("load", draw);
     </script>
 
+    <div>
+        <p>Exemple avancé de shader : utilisation d'une normal map.</p>
+    </div>
 </body>
 </html>
