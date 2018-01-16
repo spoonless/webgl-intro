@@ -87,45 +87,38 @@
             return shaderProgram;
         }
         
-        const canvas = document.getElementById("glCanvas");
-        const gl = canvas.getContext("webgl");
-
-        const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
-        gl.useProgram(shaderProgram);
-        const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
-        const uniformLineColorPosition = gl.getUniformLocation(shaderProgram, "lineColor");
-        const uniformDiffuseSamplerPosition = gl.getUniformLocation(shaderProgram, "diffuseSampler");
-        gl.bindAttribLocation(shaderProgram, 0, 'location');
-        gl.bindAttribLocation(shaderProgram, 1, 'uv');
-        gl.enableVertexAttribArray(0);
-        gl.enableVertexAttribArray(1);
-
-        function UvSphere(size) {
+        /*
+        * Crée un tableau contenant les vertices pour représenter un sphère.
+        * Un vertex est représenté par ses coordonnées dans l'espace (3 float)
+        * et ses coordonnées UV (2 float).
+        * nbRings: nombre d'anneaux de la sphere
+        */
+        function UvSphere(nbRings) {
             function computeUvSpherePoint(lattitude, longitude) {
                 //(x, y, z) = (sin(Pi * m/M) cos(2Pi * n/N), sin(Pi * m/M) sin(2Pi * n/N), cos(Pi * m/M))
-                return [Math.sin(Math.PI * lattitude/(size)) * Math.cos(2 * Math.PI * longitude/(size * 2)),
-                        Math.cos(Math.PI * lattitude/(size)),
-                        Math.sin(Math.PI * lattitude/(size)) * Math.sin(2 * Math.PI * longitude/(size * 2))];
+                return [Math.sin(Math.PI * lattitude/(nbRings)) * Math.cos(2 * Math.PI * longitude/(nbRings * 2)),
+                        Math.cos(Math.PI * lattitude/(nbRings)),
+                        Math.sin(Math.PI * lattitude/(nbRings)) * Math.sin(2 * Math.PI * longitude/(nbRings * 2))];
             }
             
             function computeUvPoint(lattitude, longitude) {
-                return [longitude / (size * 2), lattitude / size];
+                return [longitude / (nbRings * 2), lattitude / nbRings];
             }
             
             const push = Array.prototype.push;
 
             const vertices = [];
 
-            for (var i = 0; i < size * 2; ++i) {
+            for (var i = 0; i < nbRings * 2; ++i) {
                 push.apply(vertices, computeUvSpherePoint(0, 0));
                 push.apply(vertices, computeUvPoint(0, i));
-                push.apply(vertices, computeUvSpherePoint(1, i));
-                push.apply(vertices, computeUvPoint(1, i));
                 push.apply(vertices, computeUvSpherePoint(1, i+1));
                 push.apply(vertices, computeUvPoint(1, i+1));
+                push.apply(vertices, computeUvSpherePoint(1, i));
+                push.apply(vertices, computeUvPoint(1, i));
             }
-            for (var j = 1; j < (size - 1); ++j) {
-                for (var i = 0; i < size * 2; ++i) {
+            for (var j = 1; j < (nbRings - 1); ++j) {
+                for (var i = 0; i < nbRings * 2; ++i) {
                     push.apply(vertices, computeUvSpherePoint(j, i));
                     push.apply(vertices, computeUvPoint(j, i));
                     push.apply(vertices, computeUvSpherePoint(j, i+1));
@@ -142,16 +135,29 @@
 
                 }
             }
-            for (var i = 0; i < size * 2 ; ++i) {
-                push.apply(vertices, computeUvSpherePoint(size - 1, i));
-                push.apply(vertices, computeUvPoint(size - 1, i));
-                push.apply(vertices, computeUvSpherePoint(size - 1, i+1));
-                push.apply(vertices, computeUvPoint(size - 1, i+1));
-                push.apply(vertices, computeUvSpherePoint(size, size - 1));
-                push.apply(vertices, computeUvPoint(size, i));
+            for (var i = 0; i < nbRings * 2 ; ++i) {
+                push.apply(vertices, computeUvSpherePoint(nbRings - 1, i));
+                push.apply(vertices, computeUvPoint(nbRings - 1, i));
+                push.apply(vertices, computeUvSpherePoint(nbRings - 1, i+1));
+                push.apply(vertices, computeUvPoint(nbRings - 1, i+1));
+                push.apply(vertices, computeUvSpherePoint(nbRings, nbRings - 1));
+                push.apply(vertices, computeUvPoint(nbRings, i));
             }
             return vertices;
         }
+
+        const canvas = document.getElementById("glCanvas");
+        const gl = canvas.getContext("webgl");
+
+        const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
+        gl.useProgram(shaderProgram);
+        const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
+        const uniformLineColorPosition = gl.getUniformLocation(shaderProgram, "lineColor");
+        const uniformDiffuseSamplerPosition = gl.getUniformLocation(shaderProgram, "diffuseSampler");
+        gl.bindAttribLocation(shaderProgram, 0, 'location');
+        gl.bindAttribLocation(shaderProgram, 1, 'uv');
+        gl.enableVertexAttribArray(0);
+        gl.enableVertexAttribArray(1);
         
         const vertices = UvSphere(16);
         
@@ -203,5 +209,79 @@
         window.addEventListener("load", draw);
     </script>
 
+
+    <div>
+        <p>Un visualiseur d'image à 360°.</p>
+        <p>Pouvez-vous recréer ce visualiseur sans regarder le code source de la page ?</p>
+        <p>Le visualiseur est réalisé grâce à une sphère sur laquelle on plaque une texture d'une image equirectangulaire.
+        L'image est disponible à l'adresse <a href='images/HDR_040_Field_Bg.jpg'>images/HDR_040_Field_Bg.jpg</a>.
+        Aidez-vous du code des exemples précédents.
+        Pour générer les vertices de la sphère, vous pouvez utiliser le code ci-dessous :</p>
+
+<pre>
+/*
+* Crée un tableau contenant les vertices pour représenter un sphère.
+* Un vertex est représenté par ses coordonnées dans l'espace (3 float)
+* et ses coordonnées UV (2 float).
+* nbRings: nombre d'anneaux de la sphere
+*/
+function UvSphere(nbRings) {
+    function computeUvSpherePoint(lattitude, longitude) {
+        //(x, y, z) = (sin(Pi * m/M) cos(2Pi * n/N), sin(Pi * m/M) sin(2Pi * n/N), cos(Pi * m/M))
+        return [Math.sin(Math.PI * lattitude/(nbRings)) * Math.cos(2 * Math.PI * longitude/(nbRings * 2)),
+                Math.cos(Math.PI * lattitude/(nbRings)),
+                Math.sin(Math.PI * lattitude/(nbRings)) * Math.sin(2 * Math.PI * longitude/(nbRings * 2))];
+    }
+    
+    function computeUvPoint(lattitude, longitude) {
+        return [longitude / (nbRings * 2), lattitude / nbRings];
+    }
+    
+    const push = Array.prototype.push;
+
+    const vertices = [];
+
+    for (var i = 0; i < nbRings * 2; ++i) {
+        push.apply(vertices, computeUvSpherePoint(0, 0));
+        push.apply(vertices, computeUvPoint(0, i));
+        push.apply(vertices, computeUvSpherePoint(1, i+1));
+        push.apply(vertices, computeUvPoint(1, i+1));
+        push.apply(vertices, computeUvSpherePoint(1, i));
+        push.apply(vertices, computeUvPoint(1, i));
+    }
+    for (var j = 1; j < (nbRings - 1); ++j) {
+        for (var i = 0; i < nbRings * 2; ++i) {
+            push.apply(vertices, computeUvSpherePoint(j, i));
+            push.apply(vertices, computeUvPoint(j, i));
+            push.apply(vertices, computeUvSpherePoint(j, i+1));
+            push.apply(vertices, computeUvPoint(j, i+1));
+            push.apply(vertices, computeUvSpherePoint(j+1, i));
+            push.apply(vertices, computeUvPoint(j+1, i));
+
+            push.apply(vertices, computeUvSpherePoint(j, i+1));
+            push.apply(vertices, computeUvPoint(j, i+1));
+            push.apply(vertices, computeUvSpherePoint(j+1, i+1));
+            push.apply(vertices, computeUvPoint(j+1, i+1));
+            push.apply(vertices, computeUvSpherePoint(j+1, i));
+            push.apply(vertices, computeUvPoint(j+1, i));
+
+        }
+    }
+    for (var i = 0; i < nbRings * 2 ; ++i) {
+        push.apply(vertices, computeUvSpherePoint(nbRings - 1, i));
+        push.apply(vertices, computeUvPoint(nbRings - 1, i));
+        push.apply(vertices, computeUvSpherePoint(nbRings - 1, i+1));
+        push.apply(vertices, computeUvPoint(nbRings - 1, i+1));
+        push.apply(vertices, computeUvSpherePoint(nbRings, nbRings - 1));
+        push.apply(vertices, computeUvPoint(nbRings, i));
+    }
+    return vertices;
+}
+
+// création des vertices de la sphere
+const vertices = UvSphere(16);
+</pre>
+        
+    </div>
 </body>
 </html>
