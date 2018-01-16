@@ -55,21 +55,21 @@
         #define MAX_ITER 3
         void main() {
 	        vec2 sp = position;
-	        vec2 p = sp*5.0 - vec2(20.0);
+	        vec2 p = sp * 5.0 - vec2(20.0);
 	        vec2 i = p;
 	        float c = 0.6;
 	        float inten = .08;
-            float t=0.0;
+            float t = 0.0;
 	        for (int n = 0; n < MAX_ITER; n++) 
 	        {
-		        t += (100.+time * 0.05) * (1.0 - (4.0 / float(n+1)));
+		        t += (100.0 + time * 0.05) * (1.0 - (4.0 / float(n + 1)));
 		        i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
-		        c += 1.0/length(vec2(p.x / (sin(i.x+t)/inten),p.y / (cos(i.y+t)/inten)));
+		        c += 1.0 / length(vec2(p.x / (sin(i.x + t) / inten),p.y / (cos(i.y + t) / inten)));
 	        }
 	        c /= float(MAX_ITER);
-	        c = 1.5-sqrt(c);
+	        c = 1.5 - sqrt(c);
 	        c = pow(c, 4.0);
-	        gl_FragColor = vec4(vec3(c*.4), c) + vec4(0.0, 0.09, 0.16, 0.0);
+	        gl_FragColor = vec4(vec3(c * .4), c) + vec4(0.0, 0.09, 0.16, 0.0);
         }
     </script>
 
@@ -129,15 +129,29 @@
             return shaderProgram;
         }
         
+        // récupération contexte WebGL
         const canvas = document.getElementById("glCanvas");
         const gl = canvas.getContext("webgl");
         gl.clearColor(0.0, 0.0, 0.0, 0.0);
 
+        /*
+        * Activation du blend mode.
+        * Dans cette scène, on rend plusieurs éléments (le fond puis le logo).
+        * Comme le logo est transparent, il faut activer le fait que WebGL va
+        * devoir mixer la couleur des pixels des éléments rendus en fonction
+        * du canal alpha selon la formule :
+        *   couleur = alpha1 * couleur1 + (1 - alpha1) * couleur 2
+        */
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+        // création du shader pour le fond
         const backgroundShaderProgram = createShaderProgram(document.getElementById("backgroundVertexShader"), document.getElementById("backgroundFragmentShader"));
         gl.useProgram(backgroundShaderProgram);
         const uniformTimePosition = gl.getUniformLocation(backgroundShaderProgram, "time");
         gl.bindAttribLocation(backgroundShaderProgram, 0, 'location');
 
+        // création de la géométrie 2D pour le fond.
         const backgroundVertices = [
             -1,  1,
             -1, -1,
@@ -151,6 +165,7 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, backgroundVerticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(backgroundVertices), gl.STATIC_DRAW);
 
+        // création du shader pour le logo
         const shaderProgram = createShaderProgram(document.getElementById("vertexShader"), document.getElementById("fragmentShader"));
         gl.useProgram(shaderProgram);
         const uniformMvpMatrixPosition = gl.getUniformLocation(shaderProgram, "mvpMatrix");
@@ -158,26 +173,22 @@
         gl.bindAttribLocation(shaderProgram, 0, 'location');
         gl.bindAttribLocation(shaderProgram, 1, 'uv');
 
+        // création de la géométrie pour le logo (coordonnées dans l'espace et coordonnées UV)
         const vertices = [
-            -1.0, -1.0, 0.0,
-            0.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, 1.0,
-            -1.0, 1.0, 0.0,
-            0.0, 1.0,
+            -1.0, -1.0, 0.0,     0.0, 0.0,
+             1.0,  1.0, 0.0,     1.0, 1.0,
+            -1.0,  1.0, 0.0,     0.0, 1.0,
             
-            1.0, 1.0, 0.0,
-            1.0, 1.0,
-            -1.0, -1.0, 0.0,
-            0.0, 0.0,
-            1.0, -1.0, 0.0,
-            1.0, 0.0
+             1.0,  1.0, 0.0,     1.0, 1.0,
+            -1.0, -1.0, 0.0,     0.0, 0.0,
+             1.0, -1.0, 0.0,     1.0, 0.0
         ]
         
         const verticesBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
+        // création de la texture
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -186,10 +197,8 @@
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  
-        gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+        // création de la matrice de projection
         const canvasRatio = canvas.width / canvas.height;
         const projectionMatrix = mat4.create();
         mat4.ortho(projectionMatrix, -canvasRatio * 2, canvasRatio * 2, -2, 2, 0.1, 10);
@@ -207,6 +216,18 @@
                 
                 gl.clear(gl.COLOR_BUFFER_BIT);
                 
+                /*
+                * Pour une scène complexe, il faut positionner les bonnes informations
+                * avant d'appeler gl.drawArrays.
+                * Pour ce rendu, on rend d'abord le fond puis le logo. Pour des scènes
+                * plus complexe pour lesquelles il est difficile de savoir dans
+                * quel ordre il faut rendre les éléments, alors on peut activer
+                * de depth buffer.
+                */
+                
+                /*
+                * rendu du fond
+                */
                 gl.useProgram(backgroundShaderProgram);
                 gl.uniform1f(uniformTimePosition, elapsedTime / 1000.0);
 
@@ -218,6 +239,10 @@
 
                 gl.disableVertexAttribArray(0);
 
+                /*
+                * rendu du logo
+                */
+                // calcul de la matrice MVP
                 const mvpMatrix = mat4.create();
                 mat4.multiply(mvpMatrix, mvpMatrix, projectionMatrix);
                 mat4.translate(mvpMatrix, mvpMatrix, [-2.2, 0, -3]);

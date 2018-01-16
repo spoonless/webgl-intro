@@ -7,6 +7,7 @@
 <body>
     <canvas id="glCanvas" style="background: #00B7FF;" width="800" height="600"></canvas>
     
+    <!-- élément contenant la texture -->
     <img id="diffuseTexture" style="display:none;" src="images/texture.jpg">
 
     <script id="vertexShader" type="x-shader/x-vertex">
@@ -114,8 +115,14 @@
         gl.enableVertexAttribArray(0);
         gl.enableVertexAttribArray(1);
 
-        // création de la géométrie
+        /*
+        * Création de la géométrie.
+        * Le tableau des données décrit chaque vertices avec sa position et ses coordonnées UV.
+        */
         const vertices = [
+        /*
+        *      Position         Coordonnées UV
+        */
             -1.0, -1.0, 0.0,    0.0, 0.0,
              1.0,  1.0, 0.0,    1.0, 1.0,
             -1.0,  1.0, 0.0,    0.0, 1.0,
@@ -128,6 +135,11 @@
         const verticesBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+        /*
+        * Dans la description des attributs des vertices, il faut tenir
+        * compte du fait que le buffer contient à la fois des données
+        * de position et à la fois des coordonnées de texture.
+        */
         gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
         gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
 
@@ -137,8 +149,14 @@
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+        /*
+        * Chargement de la texture à partir de la balise img
+        */
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("diffuseTexture"));
+        /*
+        * On ne charge que le premier niveau (0) de mipmap et on demande à WebGL
+        * de créer les autres.
+        */
         gl.generateMipmap(gl.TEXTURE_2D);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
   
