@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>WegGL</title>
+</head>
+<body>
+    <h1>WebGL : exercices</h1>
+    <section>
+        <p>Un ensemble d'exercices pour débuter avec WebGL</p>
+        
+        <ul>
+            <li><a href="exo1.html">Exercice 1 : le contexte WebGL, la notion de shaders, d'attributs de vertex et premier programme en GLSL</a></li>
+            <li><a href="exo2.html">Exercice 2 : interpolation dans le fragment shader</a></li>
+            <li><a href="exo3.html">Exercice 3 : utilisation des variables uniformes dans les shaders (exemple d'animation)</a></li>
+            <li><a href="exo3.1.html">Exercice 3.1 : exemple d'animation avancée dans un fragment shader avec interaction</a></li>
+            <li><a href="exo3.2.html">Exercice 3.2 : un autre exemple d'animation avancée dans un fragment shader</a></li>
+            <li><a href="exo4.html">Exercice 4 : notion de matrices de transformation et de projection 2D</a></li>
+            <li><a href="exo4.1.html">Exercice 4.1 : notion de matrice MVP (model/view/projection) et introduction de gl-matrix</a></li>
+            <li><a href="exo5.html">Exercice 5 : notion de matrices de transformation et de projection 3D</a></li>
+            <li><a href="exo5.1.html">Exercice 5.1 : rendu solide avec un shading simple</a></li>
+            <li><a href="exo5.2.html">Exercice 5.2 : rendu solide en associant des couleurs aux vertices</a></li>
+            <li><a href="exo6.html">Exercice 6 : Shading de lambert</a></li>
+            <li><a href="exo6.1.html">Exercice 6.1 : Shading de Gouraud</a></li>
+            <li><a href="exo6.2.html">Exercice 6.2 : Shading de Phong</a></li>
+            <li><a href="exo7.html">Exercice 7 : Utilisation de texture pour la couleur</a></li>
+            <li><a href="exo7.1.html">Exercice 7.1 : Utilisation de texture pour la couleur avec alpha</a></li>
+            <li><a href="exo7.2.html">Exercice 7.2 : Compositing avec le navigateur Web</a></li>
+            <li><a href="exo8.html">Exercice 8 : Utilisation de texture pour stocker d'autres attributs que la couleur : exemple de la normal map</a></li>
+            <li><a href="exo9.html">Exercice 9 : Visualiseur d'image à 360°</a></li>
+        </ul>
+    </section>
+    <section>
+        <h2>Faire fonctionner les exercices avec Chrome</h2>
+        <p>Si vous voulez ouvrir les fichiers d'exercices depuis votre disque dur avec le navigateur Chrome (ou Chromium), sachez que
+        que ce navigateur n'autorise pas l'utilisation de document tiers (comme les images) dans l'api WebGL. 
+        Donc les exemples avec les textures ne fonctionneront pas correctement.</p>
+        <p>Vous pouvez démarrer Chrome mais cela ne fonctionnera pas avec tous les exercices :</p>
+
+        <p>Sous Windows</p>
+        <code>chrome.exe --disable-web-security --user-data-dir=c:\my\data</code>        
+
+        <p>Sous Linux</p>
+        <code>google-chrome --disable-web-security --user-data-dir=/home/my</code>        
+
+        <p>Sous Mac OS</p>
+        <code>open -a Google\ Chrome --args --disable-web-security --user-data-dir=/User/my</code>        
+
+        <p>La solution la plus optimale est de <strong>placer les fichiers d'exemple dans un répertoire d'un serveur Web s'exécutant en local et d'y accéder
+        avec une adresse en localhost</strong>.</p>
+        
+    </section>
+    <section>
+        <h2>Quelques schémas pour résumer WebGL</h2>
+        <p>WebGL 1.0 est basé sur Open GL ES 2.0, lui-même basé sur OpenGL 2.0 et OpenGL 3.1. WebGL 2.0 est basé sur OpenGL ES 3.0, lui-même basé sur OpenGL 4.3.</p>
+        
+        <figure>
+            <img src="images/opengl_pipeline.png">
+            <figcaption>Le pipeline de rendu pour WebGL 1.0 et 2.0 (le geometry shader n'est pas disponible avec WebGL).</figcaption>
+        </figure>
+
+        <figure>
+            <img src="images/opengl_coordinate_system.png">
+            <figcaption>Le système de repère de coordonnées de WebGL</figcaption>
+        </figure>
+    </section>
+
+    <section>
+        <h2>Quelques liens</h2>
+        <ul>
+            <li>Spécification WebGL 1.0 : <a href="https://www.khronos.org/registry/webgl/specs/latest/1.0/">https://www.khronos.org/registry/webgl/specs/latest/1.0/</a></li>
+            <li>Spécification WebGL 2.0 : <a href="https://www.khronos.org/registry/webgl/specs/latest/2.0/">https://www.khronos.org/registry/webgl/specs/latest/2.0/</a></li>
+            <li>Fiche de référence WebGL 1.0 : <a href="https://www.khronos.org/files/webgl/webgl-reference-card-1_0.pdf">https://www.khronos.org/files/webgl/webgl-reference-card-1_0.pdf</a></li>
+            <li>Fiche de référence WebGL 2.0 : <a href="https://www.khronos.org/files/webgl20-reference-guide.pdf">https://www.khronos.org/files/webgl20-reference-guide.pdf</a></li>
+            <li>Articles, tutos et API de Mozilla sur WebGL : <a href="https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API">https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API</a></li>
+            <li>Les fondamentaux sur WebGL : <a href="https://webglfundamentals.org/webgl/lessons/fr/">https://webglfundamentals.org/webgl/lessons/fr/</a></li>
+            <li>Les démos :
+                <ul>
+                    <li>Mars Curiosity (la démo de la NASA basée sur Blend4Web) : <a href="https://eyes.nasa.gov/curiosity/">https://eyes.nasa.gov/curiosity/</a></li>
+                    <li>Maps Cube (le jeu autour de Google Maps) : <a href="http://www.playmapscube.com/">http://www.playmapscube.com/</a></li>
+                    <li>Simulation d'eau : <a href="http://madebyevan.com/webgl-water/">http://madebyevan.com/webgl-water/</a></li>
+                </ul>
+            </li>
+        </ul>
+    </section>
+</body>
+</html>
