@@ -4,12 +4,12 @@
 <title>Three.js : exo 2</title>
 </head>
 <body>
-    <canvas id="glCanvas" width="800" height="600"></canvas>
-	<script src="https://threejs.org/build/three.min.js"></script>
-	<script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
-	<script>
-	    const canvas = document.getElementById('glCanvas');
-		var renderer = new THREE.WebGLRenderer({canvas: canvas, alpha: true, antialias: true});
+  <canvas id="glCanvas" width="800" height="600"></canvas>
+  <script src="https://threejs.org/build/three.min.js"></script>
+  <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    const canvas = document.getElementById('glCanvas');
+    var renderer = new THREE.WebGLRenderer({canvas: canvas, alpha: true, antialias: true});
 
         var clock = new THREE.Clock();
 		var scene = new THREE.Scene();
@@ -40,8 +40,8 @@
 
         window.addEventListener("load", draw);
 	</script>
-	
-	
+
+
 
 </body>
 </html>

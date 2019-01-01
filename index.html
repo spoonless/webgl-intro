@@ -7,9 +7,9 @@
 <body>
     <h1>WebGL : exercices</h1>
     <section>
-        <p>Un ensemble d'exercices pour débuter avec WebGL. Les exercices sont accessibles 
+        <p>Un ensemble d'exercices pour débuter avec WebGL. Les exercices sont accessibles
         depuis le dépôt GitHub <a href="https://github.com/spoonless/webgl-intro">https://github.com/spoonless/webgl-intro</a></p>
-        
+
         <ul>
             <li><a href="exo1.html">Exercice 1 : le contexte WebGL, la notion de shaders, d'attributs de vertex et premier programme en GLSL</a></li>
             <li><a href="exo2.html">Exercice 2 : interpolation dans le fragment shader</a></li>
@@ -37,10 +37,11 @@
     <section>
         <p>Un ensemble d'exercices pour débuter avec <a href="https://threejs.org/docs/">Three.js</a>.
         Le site de Three.js présente de <a href="https://threejs.org/examples/">nombreux exemples</a> pour lesquels on peut facilement consulter le code source.</p>
-        
+
         <ul>
             <li><a href="threejs/exo1.html">Exercice 1 : une scène simple avec démonstration des matériaux</a></li>
             <li><a href="threejs/exo2.html">Exercice 2 : contrôles utilisateur</a></li>
+            <li><a href="threejs/exo3.html">Exercice 3 : implémentation d'un shader personnalisé avec la classe ShaderMaterial</a></li>
         </ul>
 
     </section>
@@ -48,27 +49,27 @@
     <section>
         <h2>Faire fonctionner les exercices avec Chrome</h2>
         <p>Si vous voulez ouvrir les fichiers d'exercices depuis votre disque dur avec le navigateur Chrome (ou Chromium), sachez que
-        que ce navigateur n'autorise pas l'utilisation de document tiers (comme les images) dans l'api WebGL. 
+        que ce navigateur n'autorise pas l'utilisation de document tiers (comme les images) dans l'api WebGL.
         Donc les exemples avec les textures ne fonctionneront pas correctement.</p>
         <p>Vous pouvez démarrer Chrome mais cela ne fonctionnera pas avec tous les exercices :</p>
 
         <p>Sous Windows</p>
-        <code>chrome.exe --disable-web-security --user-data-dir=c:\my\data</code>        
+        <code>chrome.exe --disable-web-security --user-data-dir=c:\my\data</code>
 
         <p>Sous Linux</p>
-        <code>google-chrome --disable-web-security --user-data-dir=/home/my</code>        
+        <code>google-chrome --disable-web-security --user-data-dir=/home/my</code>
 
         <p>Sous Mac OS</p>
-        <code>open -a Google\ Chrome --args --disable-web-security --user-data-dir=/User/my</code>        
+        <code>open -a Google\ Chrome --args --disable-web-security --user-data-dir=/User/my</code>
 
         <p>La solution la plus optimale est de <strong>placer les fichiers d'exemple dans un répertoire d'un serveur Web s'exécutant en local et d'y accéder
         avec une adresse en localhost</strong>.</p>
-        
+
     </section>
     <section>
         <h2>Quelques schémas pour résumer WebGL</h2>
         <p>WebGL 1.0 est basé sur Open GL ES 2.0, lui-même basé sur OpenGL 2.0 et OpenGL 3.1. WebGL 2.0 est basé sur OpenGL ES 3.0, lui-même basé sur OpenGL 4.3.</p>
-        
+
         <figure>
             <img src="images/opengl_pipeline.png">
             <figcaption>Le pipeline de rendu pour WebGL 1.0 et 2.0 (le geometry shader n'est pas disponible avec WebGL).</figcaption>
